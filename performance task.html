@@ -109,6 +109,88 @@ End Google Tag Manager -->
             padding: 0;
         }
 
-        .herosection {background-image:url}
-        background-image:url ('assets/images/')    }
+        .herosection {
+            background-image:url('assets/images/reimu-in-code.png'), url('assets/images/windows-dark-mode.png');
+            background-repeat: no-repeat; repeat;
+            background-position: 90% 60%, center center /*Left & Top Indication*/;
+            padding-top: 90px;
+            padding-bottom: 90px;
+        }
+
+        @media screen and (max-width: 995px) {
+            .herosection {
+                background-image:url('assets/images/windows-dark-mode.png');
+                background-position: center center /*Left & Top Indicator*/;
+            }
+        }
+            
+        /* Customize W3.CSS */
+        .w3-col.14 .w3-card-2 {
+            padding: 16px 11px;
+            height: 260px;
+        }
+
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Arial', sans-serif;       
+        }
+
+        h1 {
+            font-size: 80px;
+            margin: 2px 0 -20px 0 !important;
+        }
+
+        .learn h1 {
+            margin: 10px 0 !important;
+        }
+
+        .green-border {
+            border-left: 4px solid #535353;
+        }
+
+        .w3-round, .w3-round-medium {
+            border-radius: 5px;
+        }
+
+        .tryit-button {
+            background-color: #190877;
+            color: white;
+            border-radius: 25px;
+            font-size: 18px;
+            width: 200px;
+        }
+
+        .tut-button {
+            background-color: #100069;
+            color: white;
+            font-size: 18px;
+            margin: auto;
+            display: block;
+            width: 200px;
+            border-radius: 25px;
+        }
+
+        .w3csstut {
+            height: 390px;
+        }
+
+        .tut-button:hover,.tryit-button:hover,.exercise-button:hover,#getdiploma a:hover {
+            background-color: #051b98 !important;
+            color:white!important;
+        }
+
+        .bar-item-hover:hover {
+            background-color: #0820a5!important;
+            color: white!important;
+        }
+
+        .bar-item-hover:hover {
+            background-color: rgb(105, 103, 103)!important;
+            color: white!important;
+        }
 </style>
