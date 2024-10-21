@@ -33,14 +33,14 @@
   opacity: 1;
 }
 #tnb-search-suggestions .span_search {
-  background-color: #ffecee;
+  background-color: #eceeff;
 }
 #tnb-search-suggestions .search_active {
-  background-color: #ffecee !important;
+  background-color: #ececff !important;
   color: #000 !important;
 }
 #tnb-search-suggestions .search_active .span_search {
-  background-color: #ffccd1;
+  background-color: #cfccff;
 }
 @media (max-width: 954px) {
   #tnb-search-suggestions {
@@ -96,7 +96,7 @@
   }
 }
 #top-nav-bar .purple-shining-stars {
-  color: #9763f6;
+  color: #639ef6;
 }
 #top-nav-bar .white-shining-stars {
   color: #ffffff;
@@ -264,7 +264,7 @@
   font-style: italic;
 }
 #top-nav-bar #tnb-google-search-container input:focus-visible {
-  outline: #04aa6d solid 3px;
+  outline: #0423aa solid 3px;
 }
 #top-nav-bar #tnb-google-search-container #tnb-google-search-submit-btn {
   position: absolute;
@@ -479,7 +479,7 @@
   display: none !important;
 }
 #top-nav-bar .active {
-  background-color: #04aa6d;
+  background-color: #0f04aa;
 }
 #top-nav-bar .menu-content {
   max-width: 1100px;
@@ -684,7 +684,7 @@
 #top-nav-bar #close-nav-x-certified:hover,
 #top-nav-bar #close-nav-x-services:hover {
   background-color: inherit !important;
-  color: #fff4a3 !important;
+  color: #a3b1ff !important;
 }
 #top-nav-bar .filter-box {
   display: flex;
@@ -760,7 +760,7 @@
 }
 @media (max-width: 1080px) {
   #top-nav-bar .active {
-    background-color: #04aa6d;
+    background-color: #040faa;
     order: -1;
   }
 }
@@ -804,7 +804,7 @@
 }
 #top-nav-bar *:focus-visible,
 #top-nav-bar .seerviceslink:focus-visible {
-  outline: #04aa6d solid 3px;
+  outline: #044caa solid 3px;
 }
 #top-nav-bar #nav_tutorials:focus-visible,
 #top-nav-bar #nav_exercises:focus-visible,
@@ -885,7 +885,7 @@
   height: 40px;
   top: 50%;
   margin-top: -20px;
-  background-color: #04AA6D;
+  background-color: #040faa;
   color: #ffffff;
   border-radius: 25px;
   padding-left: 39px;
@@ -894,7 +894,7 @@
   z-index: 4;
 }
 #top-nav-bar .tnb-right-section .tnb-login-btn:hover {
-  background-color: #059862 !important;
+  background-color: #050f98 !important;
   color: #ffffff !important;
 }
 @media (max-width: 475px) {
@@ -938,7 +938,7 @@
   margin-right: 3px;
   width: 18px;
   height: 18px;
-  color: #9763f6;
+  color: #6365f6;
 }
 #top-nav-bar .tnb-right-section .tnb-jobs-btn {
   position: relative;
@@ -957,7 +957,7 @@
   margin-right: 3px;
   width: 18px;
   height: 18px;
-  color: #9763f6;
+  color: #6365f6;
 }
 #top-nav-bar .tnb-right-section .tnb-certificates-btn {
   position: relative;
@@ -974,7 +974,7 @@
   margin-right: 3px;
   width: 18px;
   height: 18px;
-  color: #9763f6;
+  color: #6365f6;
 }
 #top-nav-bar .tnb-right-section .tnb-dashboard-btn {
   position: relative;
@@ -990,7 +990,7 @@
   position: relative;
   display: block;
   border-radius: 25px;
-  background-color: #9763f6;
+  background-color: #6365f6;
   color: #fff;
   width: 115px;
   height: 40px;
@@ -998,7 +998,7 @@
   margin-top: -20px;
 }
 #top-nav-bar .tnb-right-section .tnb-upgrade-btn:hover {
-  background-color: #7d53cc !important;
+  background-color: #535bcc !important;
   color: #fff !important;
 }
 #top-nav-bar .tnb-right-section .tnb-upgrade-btn > svg {
@@ -1176,7 +1176,7 @@
   stroke-width: 4;
 }
 .user-profile-btn > .user-progress > .user-progress-circle2 {
-  stroke: rgb(4, 170, 109);
+  stroke: rgb(4, 7, 170);
   stroke-width: 4;
 }
 .user-profile-btn.quiz-variant > .user-progress > .user-progress-circle1 {
@@ -1189,7 +1189,7 @@
   stroke: rgba(153, 102, 255, 0.1);
 }
 .user-profile-btn.exercise-variant > .user-progress > .user-progress-circle2 {
-  stroke: rgb(153, 102, 255);
+  stroke: rgb(102, 112, 255);
 }
 .user-profile-btn > .user-progress-star {
   position: absolute;
@@ -1208,12 +1208,12 @@
 }
 @keyframes user-progress-star-animation {
   0% {
-    color: #FFD700;
+    color: #00fff2;
     transform: rotate(0deg);
   }
   100% {
     font-size: 40px;
-    color: #FFD700;
+    color: #00f7ff;
     transform: rotate(360deg);
   }
 }
@@ -1266,7 +1266,7 @@
   }
   29% {
     font-size: 12px;
-    background-color: rgb(4, 170, 109);
+    background-color: rgb(4, 145, 170);
     color: #fff;
   }
   50% {
