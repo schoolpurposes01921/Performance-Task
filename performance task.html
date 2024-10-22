@@ -173,6 +173,7 @@ h1 {
   border-radius: 25px;
   font-size: 18px;
   width:200px;
+  transition: 1s;
 }
 
 .tut-button {
@@ -183,6 +184,7 @@ h1 {
   display: block;
   width: 200px;
   border-radius: 25px;
+  transition: 1s;
 }
 
 .w3csstut {
@@ -229,12 +231,13 @@ h1 {
 }
 
 .black-color {
-  background-color: #00041d;
-  color: white;
+  background-color: #00f7ff;
+  color: #000000;
+  transition: 1s;
 }
 
 .black-color:hover {
-  background-color: #000!important;
+  background-color: #db0000!important;
   color: white!important;
 }
 
@@ -681,6 +684,7 @@ form.example::after {
   background-color:#80fbff;
 }
 
+
 .learntocodeh1 {
   font-size:70px;
   font-weight:700;
@@ -739,8 +743,8 @@ form.example::after {
   color:#0079eb;
 }
 body.darkpagetheme .grey-color {
-  background-color: #094370;
-  color: #0027d6;
+  background-color: #00025f;
+  color: #ffffff;
 }
 
 body.darkpagetheme .bar-icon-hover:hover,body.darkpagetheme .fa-logo:hover {
@@ -752,7 +756,7 @@ body.darkpagetheme #main {
   border-right:0;
 }
 body.darkpagetheme #wavepath {
-  fill: rgb(40,42,53);
+  fill: #1d2a35;
 }
 
 table.gstl_50 {/*google search suggestions*/
@@ -823,32 +827,25 @@ body.darkpagetheme .icons-right  {
 <div id="top-nav-bar" class="classic">
   <div id="pagetop" class="w3-bar notranslate w3-white">
     <a id="w3-logo" href="https://www.w3schools.com/" class="w3-bar-item w3-button w3-hover-none w3-left ga-top ga-top-w3home" title="Home" style="width: 75px" aria-label="Home link">
-      <i class="fa fa-logo ws-hover-text-green" style="position: relative; z-index: 1; color: #0781e6; font-size: 36px !important" aria-hidden="true"></i>
+      <i href="assets/images/reimu-in-code.png"position: relative; z-index: 1; color: #0781e6; font-size: 36px !important" aria-hidden="true"></i>
     </a>
 
     <nav class="tnb-desktop-nav w3-bar-item">
       <a onclick="TopNavBar.openNavItem(&#39;tutorials&#39;)" class="tnb-nav-btn w3-bar-item w3-button barex bar-item-hover w3-padding-16 ga-top ga-top-tut-and-ref" href="javascript:void(0)" id="navbtn_tutorials" title="Tutorials and References" role="button">
-        Tutorials
-        <i class="fa fa-caret-down" style="font-size: 15px; display: inline;" aria-hidden="true"></i>
-        <i class="fa fa-caret-up" style="display: none; font-size: 15px" aria-hidden="true"></i>
+        Updates in Lessons
+  <!--REMEMBER ME #1-->
       </a>
 
       <a onclick="TopNavBar.openNavItem(&#39;exercises&#39;)" class="tnb-nav-btn w3-bar-item w3-button barex bar-item-hover w3-padding-16 ga-top ga-top-exc-and-quz" href="javascript:void(0)" id="navbtn_exercises" title="Exercises and Quizzes" role="button">
-        Exercises
-        <i class="fa fa-caret-down" style="font-size: 15px; display: inline;" aria-hidden="true"></i>
-        <i class="fa fa-caret-up" style="display: none; font-size: 15px" aria-hidden="true"></i>
+        Projects
       </a>
 
       <a onclick="TopNavBar.openNavItem(&#39;certified&#39;)" class="tnb-nav-btn w3-bar-item w3-button barex bar-item-hover w3-padding-16 tnb-paid-service ga-top ga-top-cert-and-course" href="javascript:void(0)" id="navbtn_certified" title="Certificates" role="button">
-        Certificates
-        <i class="fa fa-caret-down" style="font-size: 15px; display: inline;" aria-hidden="true"></i>
-        <i class="fa fa-caret-up" style="display: none; font-size: 15px" aria-hidden="true"></i>
+        Services
       </a>
 
       <a onclick="TopNavBar.openNavItem(&#39;services&#39;)" class="tnb-nav-btn w3-bar-item w3-button barex bar-item-hover w3-padding-16 ga-top ga-top-services" href="javascript:void(0)" id="navbtn_services" title="Our Services" role="button">
-        Services
-        <i class="fa fa-caret-down" style="font-size: 15px; display: inline;" aria-hidden="true"></i>
-        <i class="fa fa-caret-up" style="display: none; font-size: 15px" aria-hidden="true"></i>
+        About Us
       </a>
     </nav>
 
@@ -888,7 +885,7 @@ body.darkpagetheme .icons-right  {
 
     <div id="tnb-dark-mode-toggle-wrapper" class="w3-bar-item">
       <a onclick="TopNavBar.toggleUserPreferredTheme()" id="tnb-dark-mode-toggle-btn" href="javascript:void(0);" class="tnb-button fa ga-nav ga-dark-mode-toggle" role="button" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
-        <i></i>
+        <i>💻</i>
       </a>
     </div>
 
@@ -921,7 +918,7 @@ body.darkpagetheme .icons-right  {
       </a>
 
       <a href="https://pathfinder.w3schools.com/" class="user-authenticated tnb-dashboard-btn w3-bar-item w3-button w3-right w3-white ga-top ga-top-dashboard" title="Your W3Schools Dashboard" aria-label="Your W3Schools Dashboard">
-        My W3Schools
+        Code-Learning
       </a>
       <!-- > user-authenticated -->
 
@@ -962,7 +959,7 @@ body.darkpagetheme .icons-right  {
         <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 576 512" aria-hidden="true">
           <path d="M24 0C10.7 0 0 10.7 0 24S10.7 48 24 48H69.5c3.8 0 7.1 2.7 7.9 6.5l51.6 271c6.5 34 36.2 58.5 70.7 58.5H488c13.3 0 24-10.7 24-24s-10.7-24-24-24H199.7c-11.5 0-21.4-8.2-23.6-19.5L170.7 288H459.2c32.6 0 61.1-21.8 69.5-53.3l41-152.3C576.6 57 557.4 32 531.1 32h-411C111 12.8 91.6 0 69.5 0H24zM131.1 80H520.7L482.4 222.2c-2.8 10.5-12.3 17.8-23.2 17.8H161.6L131.1 80zM176 512a48 48 0 1 0 0-96 48 48 0 1 0 0 96zm336-48a48 48 0 1 0 -96 0 48 48 0 1 0 96 0z" fill="currentColor"></path>
         </svg>
-        Get Certified
+        Acknowledgement
       </a>
 
       <a href="https://spaces.w3schools.com/space/" class="user-authenticated tnb-spaces-btn w3-bar-item w3-button w3-right w3-white ga-top ga-top-spaces" title="Go to Your W3Schools Space" aria-label="Go to Your W3Schools Space">
@@ -976,7 +973,7 @@ body.darkpagetheme .icons-right  {
         <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 640 512" focusable="false" class="chakra-icon css-9gdywz" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
           <path d="M622.34 153.2L343.4 67.5c-15.2-4.67-31.6-4.67-46.79 0L17.66 153.2c-23.54 7.23-23.54 38.36 0 45.59l48.63 14.94c-10.67 13.19-17.23 29.28-17.88 46.9C38.78 266.15 32 276.11 32 288c0 10.78 5.68 19.85 13.86 25.65L20.33 428.53C18.11 438.52 25.71 448 35.94 448h56.11c10.24 0 17.84-9.48 15.62-19.47L82.14 313.65C90.32 307.85 96 298.78 96 288c0-11.57-6.47-21.25-15.66-26.87.76-15.02 8.44-28.3 20.69-36.72L296.6 284.5c9.06 2.78 26.44 6.25 46.79 0l278.95-85.7c23.55-7.24 23.55-38.36 0-45.6zM352.79 315.09c-28.53 8.76-52.84 3.92-65.59 0l-145.02-44.55L128 384c0 35.35 85.96 64 192 64s192-28.65 192-64l-14.18-113.47-145.03 44.56z"></path>
         </svg>
-        For Teachers
+        For Beginners
       </a>
 
       <a href="https://www.w3schools.com/plus/index.php" class="user-authenticated tnb-jobs-btn w3-bar-item w3-button w3-right w3-white ga-top ga-top-goals" title="Get personalized learning journey based on your current skills and goals" aria-label="Get personalized learning journey based on your current skills and goals">
@@ -4130,44 +4127,9 @@ function amIIntoView(x, y) {
   <a href="https://www.w3schools.com/html/default.asp" class="ga-nav subtopnav_firstitem" title="HTML Tutorial">HTML</a>
   <a href="https://www.w3schools.com/css/default.asp" class="ga-nav" title="CSS Tutorial">CSS</a>
   <a href="https://www.w3schools.com/js/default.asp" class="ga-nav" title="JavaScript Tutorial">JAVASCRIPT</a>
-  <a href="https://www.w3schools.com/sql/default.asp" class="ga-nav" title="SQL Tutorial">SQL</a>
-  <a href="https://www.w3schools.com/python/default.asp" class="ga-nav" title="Python Tutorial">PYTHON</a>
   <a href="https://www.w3schools.com/java/default.asp" class="ga-nav" title="Java Tutorial">JAVA</a>
-  <a href="https://www.w3schools.com/php/default.asp" class="ga-nav" title="PHP Tutorial">PHP</a>
-  <a href="https://www.w3schools.com/howto/default.asp" class="ga-nav" title="How to">HOW TO</a>
-  <a href="https://www.w3schools.com/w3css/default.asp" class="ga-nav" title="W3.CSS Tutorial">W3.CSS</a>
-  <a href="https://www.w3schools.com/c/index.php" class="ga-nav" title="C Tutorial">C</a>
-  <a href="https://www.w3schools.com/cpp/default.asp" class="ga-nav" title="C++ Tutorial">C++</a>
-  <a href="https://www.w3schools.com/cs/index.php" class="ga-nav" title="C# Tutorial">C#</a>
-  <a href="https://www.w3schools.com/bootstrap/bootstrap_ver.asp" class="ga-nav" title="Bootstrap Tutorial">BOOTSTRAP</a>
-  <a href="https://www.w3schools.com/react/default.asp" class="ga-nav" title="React Tutorial">REACT</a>
-  <a href="https://www.w3schools.com/mysql/default.asp" class="ga-nav" title="MySQL Tutorial">MYSQL</a>
-  <a href="https://www.w3schools.com/jquery/default.asp" class="ga-nav" title="JQuery Tutorial">JQUERY</a>
-  <a href="https://www.w3schools.com/excel/index.php" class="ga-nav" title="Excel Tutorial">EXCEL</a>
-  <a href="https://www.w3schools.com/xml/default.asp" class="ga-nav" title="XML Tutorial">XML</a>
-  <a href="https://www.w3schools.com/django/index.php" class="ga-nav" title="Django Tutorial">DJANGO</a>
-  <a href="https://www.w3schools.com/python/numpy/default.asp" class="ga-nav" title="NumPy Tutorial">NUMPY</a>
-  <a href="https://www.w3schools.com/python/pandas/default.asp" class="ga-nav" title="Pandas Tutorial">PANDAS</a>
-  <a href="https://www.w3schools.com/nodejs/default.asp" class="ga-nav" title="Node.js Tutorial">NODEJS</a>
-  <a href="https://www.w3schools.com/r/default.asp" class="ga-nav" title="R Tutorial">R</a>
-  <a href="https://www.w3schools.com/typescript/index.php" class="ga-nav" title="TypeScript Tutorial">TYPESCRIPT</a>
-  <a href="https://www.w3schools.com/angular/default.asp" class="ga-nav" title="Angular.js Tutorial">ANGULAR</a>
-  <a href="https://www.w3schools.com/git/default.asp" class="ga-nav" title="Git Tutorial">GIT</a>
-  <a href="https://www.w3schools.com/postgresql/index.php" class="ga-nav" title="PostgreSQL Tutorial">POSTGRESQL</a>
-  <a href="https://www.w3schools.com/mongodb/index.php" class="ga-nav" title="MongoDB Tutorial">MONGODB</a>
-  <a href="https://www.w3schools.com/asp/default.asp" class="ga-nav" title="ASP Tutorial">ASP</a>
-  <a href="https://www.w3schools.com/ai/default.asp" class="ga-nav" title="A.I. Tutorial">AI</a>
-  <a href="https://www.w3schools.com/go/index.php" class="ga-nav" title="Go Tutorial">GO</a>
-  <a href="https://www.w3schools.com/kotlin/index.php" class="ga-nav" title="Kotlin Tutorial">KOTLIN</a>
-  <a href="https://www.w3schools.com/sass/default.asp" class="ga-nav" title="Sass Tutorial">SASS</a>
-  <a href="https://www.w3schools.com/vue/index.php" class="ga-nav" title="Vue.js Tutorial">VUE</a>
-  <a href="https://www.w3schools.com/dsa/index.php" class="ga-nav" title="DSA Tutorial">DSA</a>
-  <a href="https://www.w3schools.com/gen_ai/index.php" class="ga-nav" title="Gen A.I. Tutorial">GEN AI</a>
-  <a href="https://www.w3schools.com/python/scipy/index.php" class="ga-nav" title="SciPy Tutorial">SCIPY</a>
-  <a href="https://www.w3schools.com/aws/index.php" class="ga-nav" title="AWS Tutorial">AWS</a>
-  <a href="https://www.w3schools.com/cybersecurity/index.php" class="ga-nav" title="Cyber security Tutorial">CYBERSECURITY</a>
-  <a href="https://www.w3schools.com/datascience/default.asp" class="ga-nav" title="Data science Tutorial">DATA SCIENCE</a>
-  <a href="javascript:void(0)" style="width:50px;visibility:hidden;"></a>  
+  <a href="https://www.w3schools.com/howto/default.asp" class="ga-nav" title="How to">C.SERVICE</a>
+  
   <div id="btn_container_subtopnav">
     <div id="scroll_right_btn" class="w3-hide-medium w3-hide-small">
       <span onmousedown="scrollmenow(1)" onmouseup="stopscrollmenow()" onmouseout="stopscrollmenow()">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;❯&nbsp;&nbsp;&nbsp;</span>
@@ -4227,17 +4189,17 @@ subtopnav_intoview();
     <br>
     <form class="example" action="https://www.w3schools.com/action_page.php" style="margin:auto;max-width:500px">
       <input type="text" placeholder="Search for Hardware & Software" aria-label="Search our tutorials" id="search2" class="ga-fp" autocomplete="off" onkeydown="key_pressed_in_search(event)" oninput="find_search_results(this)" onfocus="find_search_results(this)">
-      <button type="button" id="learntocode_searchbtn" onclick="click_learntocode_search_btn()"><i id="learntocode_searchicon" class="fa fa-search ga-fp" title="Search our tutorials"></i></button>
+      <button type="button" id="learntocode_searchbtn" onclick="click_learntocode_search_btn()">🔍</button>
       <div id="listofsearchresults">
       </div>
     </form>  
     <h4 class="learntocodeh4">
-      <a href="https://www.w3schools.com/where_to_start.asp" class="ga-fp">Not Sure Where To Begin?</a>
+      <a href="https://www.w3schools.com/where_to_start.asp" class="ga-fp">Start Learning!</a>
     </h4>
   </div>
 </div>
 
-<svg style="background-color:#acabdd;" width="100%" height="70" viewBox="0 0 100 100" preserveAspectRatio="none">
+<svg style="background-color:#007491;" width="100%" height="70" viewBox="0 0 100 100" preserveAspectRatio="none">
   <path id="wavepath" d="M0,0  L110,0C35,150 35,0 0,100z" fill="#00041d"></path>
 </svg>
 
@@ -4352,7 +4314,7 @@ h1 <span class="cssdelimitercolor" style="color:black">{</span><span class="cssp
   <p style="font-size:19px">A language for accessing databases</p>
   <a href="https://www.w3schools.com/sql/default.asp" class="w3-button ga-fp w3-block tut-button">Learn SQL</a><br>
   <a href="https://www.w3schools.com/sql/sql_ref_keywords.asp" class="w3-button ga-fp ref-button black-color">SQL Reference</a><br>
-  <a href="https://shop.w3schools.com/collections/certifications/products/sql-certificate" target="_blank" class="w3-button ga-fp w3-block ws-pink ref-button ws-pink-hover" title="Add SQL Certification">Get Certified</a><br>
+
 
  </div>
  <div class="w3-col l6" style="padding:3%">
@@ -4371,27 +4333,27 @@ h1 <span class="cssdelimitercolor" style="color:black">{</span><span class="cssp
 <div class="w3-row w3-padding-64 ws-black">
   <div style="max-width:1400px;margin:auto">
     <div class="w3-col l6 w3-center" style="padding:2% 3%;">
-      <div class="w3-card-2 w3-round" style="color:black;background-color:#FFC0C7;padding:24px">
-        <h2 style="font-size:45px;font-weight:700">PHP</h2>
+      <div class="w3-card-2 w3-round" style="color:black;background-color:#00c3ff;padding:24px">
+        <h2 style="font-size:45px;font-weight:700">Java</h2>
         <div style="height:70px;">
-          <h5 class="w3-text-dark-grey">A web server programming language</h5>
+          <h5 class="w3-text-dark-grey">The Good start of programming</h5>
         </div>
-        <a href="https://www.w3schools.com/php/default.asp" class="w3-button ga-fp tut-button black-color w3-margin-bottom">Learn PHP</a>
+        <button="https://www.w3schools.com/php/default.asp" disabled class="w3-button ga-fp tut-button black-color w3-margin-bottom">Learn Java</a>
       </div>
 
     </div>
     <div class="w3-col l6 w3-center" style="padding:2% 3%;">
-      <div class="w3-card-2 w3-round" style="background-color: #FFF4A3;color:black;padding:24px">
+      <div class="w3-card-2 w3-round" style="background-color: #00c3ff;color:black;padding:24px">
         <h2 style="font-size:45px;font-weight:700">jQuery</h2>
         <div style="height:70px;">
           <h5 class="w3-text-dark-grey">A JS library for developing web pages</h5>
         </div>
-        <a href="https://www.w3schools.com/jquery/default.asp" class="w3-button ga-fp tut-button black-color w3-margin-bottom">Learn jQuery</a>
+        <button="https://www.w3schools.com/jquery/default.asp" class="w3-button ga-fp tut-button black-color w3-margin-bottom">Coming Soon!</a>
       </div>
     </div>
 
     <div class="w3-col l6 w3-center" style="padding:2% 3%;">
-      <div class="w3-card-2 w3-round" style="color:black;background-color:#F3ECEA;padding:24px">
+      <div class="w3-card-2 w3-round" style="color:black;background-color:#00c3ff;padding:24px">
         <h2 style="font-size:45px;font-weight:700">Java</h2>
         <div style="height:70px;">
           <h5 class="w3-text-dark-grey">A programming language</h5>
@@ -4401,7 +4363,7 @@ h1 <span class="cssdelimitercolor" style="color:black">{</span><span class="cssp
     </div>
 
     <div class="w3-col l6 w3-center" style="padding:2% 3%;">
-      <div class="w3-card-2 w3-round" style="color:black;background-color:#D9EEE1;padding:24px">
+      <div class="w3-card-2 w3-round" style="color:black;background-color:#00c3ff;padding:24px">
         <h2 style="font-size:45px;font-weight:700">C++</h2>
         <div style="height:70px;">
           <h5 class="w3-text-dark-grey">A programming language</h5>
@@ -4411,7 +4373,7 @@ h1 <span class="cssdelimitercolor" style="color:black">{</span><span class="cssp
     </div>
 
     <div class="w3-col l6 w3-center" style="padding:2% 3%;">
-      <div class="w3-card-2 w3-round" style="color:black;background-color:#96D4D4;padding:24px;">
+      <div class="w3-card-2 w3-round" style="color:black;background-color:#00c3ff;padding:24px;">
         <h2 style="font-size:45px;font-weight:700">W3.CSS</h2>
         <div style="height:70px;">
           <h5>A CSS framework for faster and better responsive web pages</h5>
@@ -4421,7 +4383,7 @@ h1 <span class="cssdelimitercolor" style="color:black">{</span><span class="cssp
     </div>
 
     <div class="w3-col l6 w3-center" style="padding:2% 3%;">
-      <div class="w3-card-2 w3-round" style="color:black;background-color:#E7E9EB;padding:24px;">
+      <div class="w3-card-2 w3-round" style="color:black;background-color:#00c3ff;padding:24px;">
         <h2 style="font-size:45px;font-weight:700">Bootstrap</h2>
         <div style="height:70px;">
           <h5 class="w3-text-dark-grey">A CSS framework for designing better web pages</h5>
