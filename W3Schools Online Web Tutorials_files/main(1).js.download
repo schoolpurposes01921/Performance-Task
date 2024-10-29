@@ -1,955 +1,1584 @@
-/*
-  Pathfinder script
-*/
-
-window.Pathfinder = {
-  _enabled: true,
-  _cache: null,
-
-  _baseUrl: 'https://pathfinder.w3schools.com',
-  _apiBaseUrl: 'https://api.kai.w3sapi.com/pathfinder',
-  _mylApiBaseUrl: 'https://myl-api.w3schools.com',
-
-  _current: {
-    topicId: null,
-    chapterId: null,
-    lessonId: null,
-    lessonFullName: null,
-    lessonFinishedOnInit: null,
-  }, // we get it from MyLearning script
-
-  _userXpBumped: false,
-  _userXp: null,
-  _userGoalProgress: null,
-  _goalMeta: null,
-  _goalNavMeta: null,
-  _nextLessonButtonClicked: false, // one time action
-  // _nextLesson: null,
-  _menuButtonClickProcessing: false,
-
-  _uiTemplates: {},
-  _uiMyPathRendered: false,
-  _uiProgressUpdated: null,
-  _menuModalRendered: false,
-  _infoModalRendered: false,
+var TopNavBar = {
+  defaultHeight: '88px',
+  mainNavHeightPx: 56,
+  secondaryNavHeightPx: 32,
+  fullHeight: '100vh',
+  element: document.getElementById('top-nav-bar'),
+  // searchFromBox: false,
+  // fullScreenNav: false,
+  // fullScreenSearchResults: false,
+  parentLayoutNotifier: null,
+  parentRedirectNotifier: null,
+  inIframe: null,
+  location: null,
+  env: null,
+  loggedIn: null,
+  configured: false,
+  hasNetworkSecondaryNav: false,
+  mobileNavScrollInterval: null,
+  altProfileBaseUrl: 'https://www.w3profile.com',
+  pathfinderApiBaseUrl: 'https://api.kai.w3sapi.com/pathfinder',
+  profilePictureUrl: null,
+  _debug: null
 };
 
-Pathfinder._isDebugMode = function () {
-  return Util.isDebugMode('Pathfinder');
+window.TopNavBar = TopNavBar;
+
+TopNavBar._menuSectionsInTab = {
+  'tutorials': [
+    'tutorials_html_css_links_list',
+    'tutorials_data_analytics_links_list_desktop',
+    'tutorials_web_building_links_list_desktop',
+    'tutorials_javascript_links_list',
+    'tutorials_backend_links_list'
+  ],
+  'exercises': [
+    'exercises_html_css_links_list',
+    'exercises_data_analytics_links_list_desktop',
+    'exercises_javascript_links_list',
+    'exercises_backend_links_list'
+  ],
+  'certified': [
+    'certified_html_css_links_list',
+    'certified_data_analytics_links_list_desktop',
+    'certified_programs_links_list_desktop',
+    'certified_javascript_links_list',
+    'certified_backend_links_list'
+  ]
 };
 
-Pathfinder._logDebug = function (message, data, logRawData) {
-  return Util.logDebug('Pathfinder', message, data, logRawData);
-};
+TopNavBar._findInnerElements = function (parentElement, queryStr, callback) {
+  var output = [];
 
-Pathfinder._logError = function (message, data, logRawData) {
-  return Util.logError('Pathfinder', message, data, logRawData);
-};
+  var hasCallback = typeof callback !== 'undefined';
 
-Pathfinder.init = function () {
-  Pathfinder._logDebug('init');
+  var elements = parentElement.querySelectorAll(queryStr);
 
-  if (Pathfinder._enabled === null) {
-    Pathfinder._enabled = localStorage.getItem('Pathfinder.enabled') === 'true';
+  for (var index = 0; index < elements.length; index++) {
+    output.push(elements[index]);
+
+    if (hasCallback) {
+      callback(elements[index], index);
+    }
   }
 
-  Pathfinder._logDebug('init -> enabled: ', Pathfinder._enabled);
-
-  if (!Pathfinder._enabled) {
-    return;
-  }
-
-  var _init = async (callback) => {
-    var output = {
-      error: {
-        code: '1',
-        description: 'Failed performing "Pathfinder._init"'
-      },
-      data: null,
-    };
-
-    var prepareOutput = (output) => {
-      if (output.error.code === '1') {
-        output.error = { code: '0' };
-      }
-
-      if (output.error.code !== '0') {
-        Pathfinder._logDebug('init -> error -> output: ', output);
-        Pathfinder.clearCache();
-      }
-
-      if (typeof callback !== 'undefined') {
-        callback(output);
-      }
-
-      return output;
-    };
-
-    var cache = Pathfinder.getCache();
-
-    var urlQueryPrs = new URLSearchParams(window.location.search);
-    var urlActiveUserGoalId = urlQueryPrs.get('goalId');
-    var pathfinderLearningPathMeta = null;
-
-    if (urlActiveUserGoalId) {
-      cache = Pathfinder.updateCache({
-        activeUserGoalId: urlActiveUserGoalId,
-      });
-    }
-
-    if (cache.activeUserGoalId) {
-      var fetchPfLearningPathMetaRes = await Pathfinder.fetchPfLearningPathMeta({
-        goalId: cache.activeUserGoalId,
-        topicId: Pathfinder._current.topicId,
-        chapterId: Pathfinder._current.chapterId,
-      });
-
-      Pathfinder._logDebug('init -> cache, fetchPfLearningPathMetaRes: ', {
-        cache: cache,
-        fetchPfLearningPathMetaRes: fetchPfLearningPathMetaRes,
-      });
-
-      if (fetchPfLearningPathMetaRes.error.code === '0') {
-        // if (fetchPfLearningPathMetaRes.data.goal.status === 'active') {
-        pathfinderLearningPathMeta = fetchPfLearningPathMetaRes.data;
-        // } else {
-        //   output.error = {
-        //     code: 'GINA',
-        //     description: 'Goal is not active',
-        //     meta: {
-        //       goalId: cache.activeUserGoalId,
-        //       goal: fetchPfLearningPathMetaRes.data.goal,
-        //     }
-        //   };
-
-        //   output.error.context = 'Pathfinder.fetchPfLearningPathMeta';
-        //   return prepareOutput(output);
-        // }
-      } else {
-        output.error = fetchPfLearningPathMetaRes.error;
-        output.error.context = 'Pathfinder.fetchPfLearningPathMeta';
-        return prepareOutput(output);
-      }
-    } else {
-      output.error = {
-        code: 'NO_ACTIVE_GOAL',
-        description: 'No active goal',
-        context: 'Pathfinder.fetchPfLearningPathMeta',
-      };
-
-      return prepareOutput(output);
-    }
-
-    Pathfinder._goalMeta = pathfinderLearningPathMeta.goal;
-    Pathfinder._goalMeta.uuid = cache.activeUserGoalId;
-    Pathfinder._userXp = pathfinderLearningPathMeta.userXp;
-    Pathfinder._userGoalProgress = pathfinderLearningPathMeta.userGoalProgress;
-
-    var promises = [];
-
-    // cache my path template
-    promises.push(Pathfinder.uiFetchTemplate('/lib/pathfinder/html/user-authenticated/my-path.tmpl.html'));
-
-    // Check for cookie and possibly initiate modal rendering
-    var hideMyPathInfoModal = Cookies.get('Pathfinder.hideMyPathInfoModal');
-    if (hideMyPathInfoModal !== 'true') {
-      promises.push(Pathfinder.uiRenderMyPathInfoModal());
-    }
-
-    await Promise.all(promises);
-
-    Pathfinder.uiRenderMyPath();
-
-    return prepareOutput(output);
-  };
-
-  Util.objFieldOnSetCallback({
-    scopeRef: MyLearning,
-    fieldName: 'topicId', // set by MyLearning only after it's fetched from the server
-    callback: function (res) {
-      if (res.error.code === '0') {
-        Pathfinder._current = {
-          topicId: MyLearning.topicId,
-          chapterId: MyLearning.chapterId,
-          lessonId: MyLearning.lessonId,
-          lessonFullName: MyLearning.lessonFullName,
-          lessonFinishedOnInit: MyLearning.lessonFinishedOnInit,
-        };
-
-        Pathfinder._userXpBumped = MyLearning.lessonFinishedOnInit === true;
-
-        Pathfinder._logDebug('Pathfinder._current: ', Pathfinder._current);
-
-        if (!Util.allObjectFieldsAreSet(Pathfinder._current)) {
-          Pathfinder._logError('MyLearning.topicId -> missing required parameters -> Pathfinder._current: ', Pathfinder._current);
-          return;
-        }
-
-        _init((res) => {
-          if (res.error.code === 'FFUPGBID') {
-            _init();
-          }
-        });
-      } else {
-        Pathfinder._logError('MyLearning.topicId -> res: ', res);
-      }
-    }
-  });
+  return output;
 };
 
-Pathfinder.clearCache = function () {
-  Pathfinder._cache = null;
+TopNavBar._getInnerElement = function (parentElement, queryStr) {
+  var elms = TopNavBar._findInnerElements(parentElement, queryStr);
 
-  sessionStorage.removeItem('Pathfinder.cache');
-};
-
-Pathfinder.getCache = function () {
-  if (Pathfinder._cache !== null) {
-    return Pathfinder._cache;
+  if (elms.length) {
+    return elms[0];
   }
 
-  var rawCache = sessionStorage.getItem('Pathfinder.cache');
+  return undefined;
+};
 
-  if (rawCache === null) { // not set
-    Pathfinder._cache = {};
-  } else {
-    var parseJsonRes = Util.parseJson(rawCache);
+TopNavBar._loopArray = function (arr, callback) {
+  for (var index = 0; index < arr.length; index++) {
+    callback(arr[index], index);
+  }
+};
 
-    if (parseJsonRes.error.code !== '0') {
-      Pathfinder._logError('getCache -> parseJsonRes: ', parseJsonRes);
+TopNavBar._loopObj = function (obj, callback) {
+  for (var key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      callback(obj[key], key);
     }
-
-    Pathfinder._cache = parseJsonRes.data;
   }
-
-  return Pathfinder._cache;
 };
 
-Pathfinder.updateCache = function (data) {
-  var cacheRef = Pathfinder.getCache();
+TopNavBar._inIframe = function () {
+  if (TopNavBar.inIframe !== null) {
+    return TopNavBar.inIframe;
+  }
 
   try {
-    for (var key in data) {
-      if (data.hasOwnProperty(key)) {
-        cacheRef[key] = data[key];
-      }
-    }
-
-    cacheRef.updatedUtms = Util.getCurrentUtms();
-
-    sessionStorage.setItem('Pathfinder.cache', JSON.stringify(cacheRef));
-  } catch (exc) {
-    Pathfinder._logError('updateCache -> error, cache: ', {
-      error: Util.getMetaPreparedFromException(exc),
-      cache: cacheRef,
-    });
+    TopNavBar.inIframe = window.self !== window.top;
+  } catch (e) {
+    TopNavBar.inIframe = true;
   }
 
-  return cacheRef;
-};
-
-Pathfinder.fetch = async (prs) => {
-  return new Promise((resolve) => {
-    prs.callback = resolve;
-
-    Util.fetch(prs);
-  });
-};
-
-Pathfinder.fetchPfLearningPathMeta = async (prs) => {
-  var goalId = prs.goalId;
-  var topicId = prs.topicId;
-  var chapterId = prs.chapterId;
-
-  var output = {
-    error: {
-      code: '1',
-      description: 'Failed performing "Pathfinder.fetchPfLearningPathMeta"'
-    },
-    data: null,
-  };
-
-  var fetchRes = await Pathfinder.fetch({
-    context: 'Pathfinder',
-    method: 'GET',
-    url: Pathfinder._apiBaseUrl + '/learningpath-api/learningpath/classic?goalId=' + goalId + '&topicId=' + topicId + '&chapterId=' + chapterId,
-    sendCookies: false,
-    withUserSession: true,
-    prepareResponseData: true,
-  });
-
-  Pathfinder._logDebug('fetchPfLearningPathMeta -> fetchRes: ', fetchRes);
-
-  if (fetchRes.error.code === '0') {
-    output.data = fetchRes.data;
-  } else {
-    output.error = fetchRes.error;
-  }
-
-  if (output.error.code === '1') {
-    output.error = { code: '0' };
-  }
-
-  return output;
-};
-
-Pathfinder.fetchMylLearningPathNavMeta = async (prs) => {
-  var output = {
-    error: {
-      code: '1',
-      description: 'Failed performing "Pathfinder.fetchMylLearningPathNavMeta"'
-    },
-    data: null,
-  };
-
-  // var cache = prs.cache;
-  var goalId = prs.goalId;
-  var topicId = prs.topicId;
-  var lessonPath = prs.lessonPath;
-  var nextLessonOnly = prs.nextLessonOnly || false;
-
-  var requestUrl = Pathfinder._mylApiBaseUrl + '/api/pathfinder/learning-path?v=2&goalId=' + goalId + '&topicId=' + topicId + '&lessonPath=' + encodeURIComponent(lessonPath);
-
-  if (nextLessonOnly) {
-    requestUrl += '&mode=next-lesson'
-  }
-
-  var fetchRes = await Pathfinder.fetch({
-    context: 'Pathfinder',
-    method: 'GET',
-    url: requestUrl,
-    sendCookies: false,
-    withUserSession: true,
-    prepareResponseData: true,
-  });
-
-  Pathfinder._logDebug('fetchMylLearningPathNavMeta -> fetchRes: ', fetchRes);
-
-  if (fetchRes.error.code === '0') {
-    output.data = fetchRes.data;
-  } else {
-    output.error = fetchRes.error;
-  }
-
-  if (output.error.code === '1') {
-    output.error = { code: '0' };
-  }
-
-  return output;
-};
-
-Pathfinder.patchMylLearningPathNavMetaRefs = function (navMeta) {
-  var currentLesson = navMeta.currentLesson;
-
-  if (currentLesson !== null && currentLesson.lessonIndex !== -1) {
-    navMeta.currentLesson = navMeta.topics[currentLesson.topicIndex].chapters[currentLesson.chapterIndex].lessons[currentLesson.lessonIndex];
-  } else {
-    navMeta.currentLesson = null;
-  }
-
-  var nextLesson = navMeta.nextLesson;
-
-  if (nextLesson !== null && nextLesson.lessonIndex !== -1) {
-    navMeta.nextLesson = navMeta.topics[nextLesson.topicIndex].chapters[nextLesson.chapterIndex].lessons[nextLesson.lessonIndex];
-  } else {
-    navMeta.nextLesson = null;
-  }
-
-  Pathfinder._logDebug('patchMylLearningPathNavMetaRefs -> navMeta: ', navMeta);
-
-  return navMeta;
+  return TopNavBar.inIframe;
 }
 
-// UI
-
-Pathfinder.uiGetIconHtml = function (params) {
-  var id = params.id;
-  var type = params.type;
-  var size = params.size || 'auto 100%';
-  var containerSize = params.containerSize || '16px 16px';
-  var containerSizeChunks = containerSize.split(' ');
-  var containerWidth = containerSizeChunks[0];
-  var containerHeight = containerSizeChunks[1];
-  var color = params.color || 'white';
-  var customStyles = params.style || '';
-
-  if (typeof type === 'undefined') {
-    type = 'main';
+TopNavBar._isDebugMode = function () {
+  if (TopNavBar._debug !== null) {
+    return TopNavBar._debug;
   }
 
-  var svgPath = '/lib/pathfinder/icon/' + type + '/' + id + '.svg';
-
-  var svgStyles = '-webkit-mask: url(' + svgPath + ') no-repeat center;';
-  svgStyles += 'mask: url(' + svgPath + ') no-repeat center;';
-  svgStyles += '-webkit-mask-size: ' + size + ';';
-  svgStyles += 'mask-size: ' + size + ';';
-  svgStyles += 'width: ' + containerWidth + ';';
-  svgStyles += 'height: ' + containerHeight + ';';
-  svgStyles += customStyles;
-
-  return '<div class="-svg-icon -svg-' + id + '-icon -color-' + color + '" style="' + svgStyles + '"></div>';
-};
-
-Pathfinder.uiFetchTemplate = async (fetchUrl) => {
-  if (typeof Pathfinder._uiTemplates[fetchUrl] !== 'undefined') {
-    return Pathfinder._uiTemplates[fetchUrl];
-  }
-
-  var output = {
-    error: {
-      code: '1',
-      description: 'Failed performing "Pathfinder.uiFetchTemplate"'
-    },
-    data: null,
-  };
-
-  var fetchRes = await Pathfinder.fetch({
-    context: 'Pathfinder',
-    method: 'GET',
-    url: fetchUrl,
-    sendCookies: false,
-    withUserSession: false,
-    prepareResponseData: false,
-  });
-
-  Pathfinder._logDebug('uiFetchTemplate -> fetchUrl, fetchRes: ', {
-    fetchUrl: fetchUrl,
-    fetchRes: fetchRes,
-  });
-
-  if (fetchRes.error.code === '0') {
-    output.data = fetchRes.dataStr;
-
-    output.error = { code: '0' };
+  if (
+    localStorage.getItem('TopNavBar.debug') === 'true'
+  ) {
+    TopNavBar._debug = true;
   } else {
-    output.error = fetchRes.error;
+    TopNavBar._debug = false;
   }
 
-  Pathfinder._uiTemplates[fetchUrl] = output;
-
-  return output;
+  return TopNavBar._debug;
 };
 
-Pathfinder.uiPrepareTemplateHtml = function (template, params) {
-  var output = template;
-
-  Object.keys(params).forEach(function (key) {
-    var placeholder = '{{ ' + key + ' }}';
-
-    output = output.replace(new RegExp(placeholder, 'g'), params[key]);
-  });
-
-  return output;
-};
-
-Pathfinder.uiUpdateMyPathNextButton = function () {
-  Pathfinder.fetchMylLearningPathNavMeta({
-    goalId: Pathfinder._goalMeta.uuid,
-    topicId: Pathfinder._current.topicId,
-    lessonPath: window.location.pathname,
-    nextLessonOnly: true,
-  }).then(function (res) {
-    Pathfinder._logDebug('uiUpdateMyPathNextButton -> fetchMylLearningPathNavMeta -> res: ', res);
-
-    var myPathElement = document.querySelector('.w3s-pathfinder.-my-path');
-    var nextLessonBtnElement = myPathElement.querySelector('.-next-lesson-btn');
-
-    if (res.error.code === '0') {
-      var nextLesson = res.data.nextLesson;
-
-      Pathfinder._nextLesson = nextLesson;
-
-      Pathfinder._logDebug('uiUpdateMyPathNextButton -> fetchMylLearningPathNavMeta -> nextLesson: ', nextLesson);
-    } else {
-      Pathfinder._logError('uiUpdateMyPathNextButton -> fetchMylLearningPathNavMeta -> res: ', res);
-
-      Pathfinder._nextLesson = null;
-
-      // if (nextLessonBtnElement) {
-      //   nextLessonBtnElement.classList.add('-disabled');
-      // }
-    }
-
-    if (
-      nextLessonBtnElement
-      && nextLessonBtnElement.classList.contains('-variant-1')
-    ) {
-      nextLessonBtnElement.classList.add('-variant-4');
-      nextLessonBtnElement.classList.remove('-variant-1');
-    }
-  });
-};
-
-Pathfinder.uiUpdate = function () {
-  if (Pathfinder._uiProgressUpdated !== null) {
+TopNavBar._logDebug = function (message, data) {
+  if (!TopNavBar._isDebugMode()) {
     return;
   }
 
-  Pathfinder._uiProgressUpdated = false;
-
-  var myPathElement = document.querySelector('.w3s-pathfinder.-my-path');
-
-  if (!Pathfinder._userXpBumped) {
-    // Pathfinder._userXp += 10;
-
-    var xpIncrementElement = myPathElement.querySelector('.-xp .-increment');
-    var xpAmountElement = myPathElement.querySelector('.-xp .-amount');
-    // var progressBarElement = myPathElement.querySelector('.-progress-bar');
-
-    if (
-      !xpAmountElement
-      || !xpIncrementElement
-      // || !progressBarElement
-    ) {
-      Pathfinder._logError('uiUpdate -> related elements not found');
-      return;
-    }
-  }
-
-  function actualUiUpdateProgress() {
-    Pathfinder._logDebug('uiUpdate -> actualUiUpdateProgress -> Pathfinder._uiProgressUpdated: ', {
-      '_uiProgressUpdated': Pathfinder._uiProgressUpdated
-    });
-
-    if (Pathfinder._uiProgressUpdated) {
-      return;
-    }
-
-    Pathfinder._uiProgressUpdated = true;
-
-    var myPathElement = document.querySelector('.w3s-pathfinder.-my-path');
-
-    Pathfinder._logDebug('uiUpdate -> actualUiUpdateProgress -> Pathfinder._userXpBumped: ', {
-      '_userXpBumped': Pathfinder._userXpBumped
-    });
-
-    if (!Pathfinder._userXpBumped) {
-      var xpIncrementElement = myPathElement.querySelector('.-xp .-increment');
-      var xpAmountElement = myPathElement.querySelector('.-xp .-amount');
-
-      xpAmountElement.textContent = Pathfinder._userXp;
-      xpIncrementElement.classList.add('-active');
-
-      Pathfinder._userXpBumped = true;
-    }
-
-    // var progress = Pathfinder.updateProgressOnVisitedLesson();
-    // var progressPercentage = progress.percentage + '%';
-
-    // var progressBarElement = myPathElement.querySelector('.-progress-bar');
-    // var progressBarSliderElement = progressBarElement.querySelector('.-slider');
-
-    // progressBarElement.title = progressPercentage;
-    // progressBarSliderElement.title = progressPercentage;
-    // progressBarSliderElement.style.width = progressPercentage;
-
-    Pathfinder.uiUpdateMyPathNextButton();
-
-    // nextLessonBtnElement.classList.remove('-variant-1');
-    // nextLessonBtnElement.classList.add('-variant-6');
-  }
-
-  function onScrollHandler() {
-    var myPathElement = document.querySelector('.w3s-pathfinder.-my-path');
-
-    if (Util.elementIsInViewport(myPathElement)) {
-      actualUiUpdateProgress();
-      window.removeEventListener('scroll', onScrollHandler);
-    }
-  }
-
-  if (Util.elementIsInViewport(myPathElement)) {
-    actualUiUpdateProgress();
+  if (typeof data === 'undefined') {
+    console.log('TopNavBar -> ' + message);
   } else {
-    window.addEventListener('scroll', onScrollHandler);
+    console.log('TopNavBar -> ' + message, data);
   }
-};
-
-Pathfinder.uiStopClickPropagation = function (event) {
-  event.stopPropagation();
 }
 
-Pathfinder.uiCloseMyPathInfoModal = function () {
-  var infoWrapperElm = Util.getInnerElement(document.body, '.w3s-pathfinder.-my-path-info');
-
-  if (infoWrapperElm) {
-    // detach event listeners
-    infoWrapperElm.removeEventListener('click', Pathfinder.uiStopClickPropagation);
-
-    Util.getInnerElement(infoWrapperElm, '.-close-btn').removeEventListener('click', Pathfinder.uiCloseMyPathInfoModal);
-
-    Util.getInnerElement(infoWrapperElm, '.-blur-overlay').removeEventListener('click', Pathfinder.uiCloseMyPathInfoModal);
-
-    Util.getInnerElement(infoWrapperElm, '.-understand-btn').removeEventListener('click', Pathfinder.uiMyPathInfoModalHandleUnderstandBtn);
-
-    Util.getInnerElement(infoWrapperElm, '.-dont-show-again').removeEventListener('click', Pathfinder.uiMyPathInfoModalToggleDontShowCheckbox);
-
-    infoWrapperElm.remove();
-
-    Pathfinder._infoModalRendered = false;
+TopNavBar._logWarning = (message, data) => {
+  if (typeof data === 'undefined') {
+    console.warn('TopNavBar -> ' + message);
+  } else {
+    console.warn('TopNavBar -> ' + message, data);
   }
-};
+}
 
-Pathfinder.uiMyPathInfoModalHandleUnderstandBtn = function () {
-  var checkboxWrapperElm = Util.getInnerElement(document.body, '.w3s-pathfinder.-my-path-info .-dont-show-again');
+TopNavBar.isExpanded = function () {
+  var navs = [
+    '#nav_tutorials',
+    '#nav_exercises',
+    '#nav_certified',
+    '#nav_services',
+    // '.tnb-mobile-nav',
+  ];
 
-  if (checkboxWrapperElm) {
-    if (checkboxWrapperElm.classList.contains('-checked')) {
-      Cookies.set('Pathfinder.hideMyPathInfoModal', 'true', { expires: 365 });
-    }
-  }
+  for (var i = 0; i < navs.length; i++) {
+    var element = TopNavBar.element.querySelector(navs[i]);
 
-  Pathfinder.uiCloseMyPathInfoModal();
-};
-
-Pathfinder.uiMyPathInfoModalToggleDontShowCheckbox = function () {
-  var checkboxWrapperElm = Util.getInnerElement(document.body, '.w3s-pathfinder.-my-path-info .-dont-show-again');
-
-  if (checkboxWrapperElm) {
-    if (checkboxWrapperElm.classList.contains('-checked')) {
-      checkboxWrapperElm.classList.remove('-checked');
-    } else {
-      checkboxWrapperElm.classList.add('-checked');
-    }
-  }
-};
-
-Pathfinder.uiRenderMyPathInfoModal = async () => {
-  if (Pathfinder._infoModalRendered) {
-    return;
-  }
-
-  Pathfinder._infoModalRendered = true;
-
-  var templateFetchRes = await Pathfinder.uiFetchTemplate('/lib/pathfinder/html/user-authenticated/my-path-info-modal.tmpl.html');
-
-  Pathfinder._logDebug('uiRenderMyPathInfoModal -> templateFetchRes: ', templateFetchRes);
-
-  if (templateFetchRes.error.code !== '0') {
-    Pathfinder._logError('uiRenderMyPathInfoModal -> templateFetchRes: ', templateFetchRes);
-    return;
-  }
-
-  var targetElm = document.body;
-
-  var tmpPlaceholderDiv = document.createElement('div');
-  tmpPlaceholderDiv.innerHTML = templateFetchRes.data;
-
-  targetElm.appendChild(tmpPlaceholderDiv.firstChild);
-
-  var infoWrapperElm = Util.getInnerElement(targetElm, '.w3s-pathfinder.-my-path-info');
-
-  if (!infoWrapperElm) {
-    Pathfinder._logError('uiRenderMyPathInfoModal -> wrapper elm not found');
-    return;
-  }
-
-  infoWrapperElm.addEventListener('click', Pathfinder.uiStopClickPropagation);
-
-  Util.getInnerElement(infoWrapperElm, '.-close-btn').addEventListener('click', Pathfinder.uiCloseMyPathInfoModal);
-
-  Util.getInnerElement(infoWrapperElm, '.-blur-overlay').addEventListener('click', Pathfinder.uiCloseMyPathInfoModal);
-
-  Util.getInnerElement(infoWrapperElm, '.-understand-btn').addEventListener('click', Pathfinder.uiMyPathInfoModalHandleUnderstandBtn);
-
-  Util.getInnerElement(infoWrapperElm, '.-dont-show-again').addEventListener('click', Pathfinder.uiMyPathInfoModalToggleDontShowCheckbox);
-};
-
-Pathfinder.uiRenderMyPath = async () => {
-  if (Pathfinder._uiMyPathRendered) {
-    return;
-  }
-
-  Pathfinder._logDebug('uiRenderMyPath -> init');
-
-  Pathfinder._uiMyPathRendered = true;
-
-  var templateFetchRes = await Pathfinder.uiFetchTemplate('/lib/pathfinder/html/user-authenticated/my-path.tmpl.html');
-
-  Pathfinder._logDebug('uiRenderMyPath -> templateFetchRes: ', templateFetchRes);
-
-  if (templateFetchRes.error.code !== '0') {
-    Pathfinder._logError('uiRenderMyPath -> templateFetchRes: ', templateFetchRes);
-    Pathfinder._uiMyPathRendered = false;
-    return;
-  }
-
-  var tmplParams = {
-    myPathUrl: Pathfinder._baseUrl + '/learningpaths',
-    homeUrl: Pathfinder._baseUrl + '/learningpaths', // both my path and home are the same
-    headline: Pathfinder._current.lessonFullName,
-    nextLessonTitle: '',
-    nextLessonBtnClass: '-variant-1',
-    progressAmount: Pathfinder._userGoalProgress + '%',
-    xpAmount: Pathfinder._userXp
-  };
-
-  var myPathHtml = Pathfinder.uiPrepareTemplateHtml(templateFetchRes.data, tmplParams);
-
-  document.getElementById('user-profile-bottom-wrapper').innerHTML = myPathHtml;
-
-  var wrapperElm = Util.getInnerElement(document.body, '.w3s-pathfinder.-my-path');
-
-  if (document.getElementById('stickyadcontainer')) {
-    wrapperElm.parentElement.classList.add('-with-ad');
-  }
-
-  var menuButtonElm = wrapperElm.querySelector('.-menu-btn');
-  menuButtonElm.addEventListener('click', function () {
-    if (Pathfinder._menuButtonClickProcessing) {
-      return;
-    }
-
-    Pathfinder._menuButtonClickProcessing = true;
-
-    var handleGoalNavMetaReady = function () {
-      Pathfinder.uiRenderMenuModal();
-
-      Pathfinder._menuButtonClickProcessing = false;
+    if (
+      element
+      && element.style.display !== 'none'
+      && element.style.display !== ''
+    ) {
+      return true;
     };
+  }
 
-    if (Pathfinder._goalNavMeta === null) {
-      Pathfinder.fetchMylLearningPathNavMeta({
-        goalId: Pathfinder._goalMeta.uuid,
-        topicId: Pathfinder._current.topicId,
-        lessonPath: window.location.pathname,
-        nextLessonOnly: false,
-      }).then(function (res) {
-        Pathfinder._logDebug('menuButtonElm -> click -> fetchMylLearningPathNavMeta -> res: ', res);
+  if (TopNavBar.element.querySelector('.tnb-mobile-nav').classList.contains('tnb-active')) {
+    return true;
+  }
 
-        if (res.error.code === '0') {
-          Pathfinder._goalNavMeta = Pathfinder.patchMylLearningPathNavMetaRefs(res.data.navMetaLite);
+  return TopNavBar.googleSearchResultsShown();
+};
 
-          Pathfinder._logDebug('menuButtonElm -> click -> fetchMylLearningPathNavMeta -> _goalNavMeta: ', Pathfinder._goalNavMeta);
+TopNavBar._sendParentInitMessage = function () {
+  window.parent.postMessage({
+    'action': 'INIT',
+    'expanded': false,
+    'initHeight': TopNavBar.defaultHeight, // legacy
+    'fullHeight': TopNavBar.fullHeight,
+    'mainNavHeightPx': TopNavBar.mainNavHeightPx,
+    'secondaryNavHeightPx': TopNavBar.secondaryNavHeightPx
+  }, '*');
+};
 
-          handleGoalNavMetaReady();
-        } else {
-          Pathfinder._logError('menuButtonElm -> click -> fetchMylLearningPathNavMeta -> res: ', res);
-        }
+TopNavBar._applyNoUpsellUiTweaks = function () {
+  // action can't be reverted
+
+  TopNavBar._findInnerElements(TopNavBar.element, '.tnb-paid-service', function (paidServiceElm) {
+    paidServiceElm.remove();
+  });
+
+  TopNavBar._findInnerElements(TopNavBar.element, '.tnb-upgrade', function (upgradeElm) {
+    upgradeElm.classList.add('w3-hide');
+  });
+}
+
+TopNavBar.postInitConfig = function (prs) {
+  TopNavBar._logDebug('postInitConfig');
+  // return;
+
+  // can be checked to avoid configuring twice
+  TopNavBar.configured = true;
+
+  if (
+    typeof prs.sendParentInitMessage !== 'undefined'
+    && prs.sendParentInitMessage === true
+  ) { // optional prop required in billing setup
+    TopNavBar._sendParentInitMessage();
+  }
+
+  TopNavBar.env = prs.env;
+
+  TopNavBar.location = prs.location; // location required fields: href, hostname, pathname
+
+  TopNavBar.hasNetworkSecondaryNav = TopNavBar.env === 'network' && !TopNavBar.lite;
+
+  if (!TopNavBar.hasNetworkSecondaryNav) {
+    // check if child element #secondary-top-nav-bar exists
+    if (TopNavBar.element.querySelector('#secondary-top-nav-bar')) {
+      TopNavBar.hasNetworkSecondaryNav = true;
+    }
+  }
+
+  if (TopNavBar.hasNetworkSecondaryNav) {
+    SecondaryTopNavBar.postInitConfig(prs);
+  }
+
+  // execution order priority: high
+  TopNavBar._applyUserSessionUiTweaks({
+    loggedIn: prs.loggedIn,
+    subscriptionPlan: prs.subscriptionPlan
+  });
+
+  // execution order priority: mid
+  if (TopNavBar.env === 'network') {
+    Util.patchAuthLinks({
+      loggedIn: prs.loggedIn,
+      currentUrl: TopNavBar.location.href
+    });
+  } else {
+    Util.patchAuthLinks({
+      loggedIn: prs.loggedIn
+    });
+  }
+
+  var featureFlags = prs.featureFlags;
+
+  if (typeof featureFlags === 'undefined') {
+    featureFlags = {
+      'noUpsell': false,
+    };
+  }
+
+  // execution order priority: low
+  if (featureFlags.noUpsell) {
+    TopNavBar._applyNoUpsellUiTweaks();
+  }
+}
+
+TopNavBar.renderProfilePicture = function (profilePictureUrl) {
+  var userProfilePictureElm = TopNavBar._getInnerElement(TopNavBar.element, '.user-profile-picture');
+
+  // already set -> update
+  if (userProfilePictureElm) {
+    TopNavBar.profilePictureUrl = profilePictureUrl;
+
+    userProfilePictureElm.style.backgroundImage = "url('" + profilePictureUrl + "')";
+
+    return;
+  }
+
+  var userProfileBtnElm = TopNavBar._getInnerElement(TopNavBar.element, '.user-profile-btn');
+
+  if (!userProfileBtnElm) {
+    return;
+  }
+
+  TopNavBar.profilePictureUrl = profilePictureUrl;
+
+  var userProfilePictureWrapper = document.createElement('div');
+  userProfilePictureWrapper.className = 'user-profile-picture-wrapper';
+
+  var userProfilePicture = document.createElement('div');
+  userProfilePicture.className = 'user-profile-picture';
+
+  userProfilePicture.style.backgroundImage = "url('" + profilePictureUrl + "')";
+
+  userProfilePictureWrapper.appendChild(userProfilePicture);
+
+  userProfileBtnElm.appendChild(userProfilePictureWrapper);
+};
+
+TopNavBar._applyUserSessionUiTweaks = function (prs) {
+  TopNavBar._logDebug('_applyUserSessionUiTweaks -> prs: ', prs);
+
+  var loggedIn = prs.loggedIn;
+  var subscriptionPlan = prs.subscriptionPlan;
+  var initialLoggedInState = TopNavBar.loggedIn;
+  var loggedInStateChanged = TopNavBar.loggedIn !== loggedIn;
+  TopNavBar.loggedIn = loggedIn;
+
+  TopNavBar._logDebug('_applyUserSessionUiTweaks -> state: ', {
+    'loggedIn': loggedIn,
+    'initialLoggedInState': initialLoggedInState,
+    'loggedInStateChanged': loggedInStateChanged,
+    'subscriptionPlan': subscriptionPlan
+  });
+
+  if (loggedIn) {
+    TopNavBar._findInnerElements(document, '.user-authenticated', function (elm) {
+      elm.classList.remove('w3-hide');
+    });
+
+    TopNavBar._findInnerElements(document, '.user-anonymous', function (elm) {
+      elm.classList.add('w3-hide');
+    });
+
+    if (subscriptionPlan === 'diamond') {
+      TopNavBar._findInnerElements(TopNavBar.element, '.tnb-upgrade', function (elm) {
+        elm.classList.add('w3-hide');
       });
-    } else {
-      handleGoalNavMetaReady();
+    } else { // free | pro
+      TopNavBar._findInnerElements(TopNavBar.element, '.tnb-upgrade', function (elm) {
+        elm.classList.remove('w3-hide');
+      });
     }
+
+    if (TopNavBar.profilePictureUrl === null) {
+      TopNavBar.profilePictureUrl = ''; // flag that fetch was initialized
+      Util.fetch({
+        context: 'TopNavBar -> _applyUserSessionUiTweaks',
+        method: 'GET',
+        url: TopNavBar.pathfinderApiBaseUrl + '/profile-api/profile/basic-lite?fields=personal',
+        prepareResponseData: true,
+        withUserSession: true,
+        handleUserSessionRefresh: false,
+        handleUserSessionRedirection: false,
+        callback: function (reqRes) {
+          if (
+            reqRes.error.code === '0'
+            && typeof reqRes.data.personal !== 'undefined'
+            && typeof reqRes.data.personal.profilePicture !== 'undefined'
+            && reqRes.data.personal.profilePicture
+          ) {
+            var profilePictureUrl = TopNavBar.altProfileBaseUrl + '/' + reqRes.data.personal.profilePicture;
+
+            TopNavBar.renderProfilePicture(profilePictureUrl);
+          } else {
+            TopNavBar._logWarning('TopNavBar -> _applyUserSessionUiTweaks -> profile picture -> reqRes: ', reqRes);
+          }
+        },
+      });
+    }
+  } else { // anonymous
+    TopNavBar._findInnerElements(document, '.user-authenticated', function (elm) {
+      elm.classList.add('w3-hide');
+    });
+
+    TopNavBar._findInnerElements(document, '.user-anonymous', function (elm) {
+      elm.classList.remove('w3-hide');
+    });
+
+    TopNavBar._findInnerElements(TopNavBar.element, '.tnb-upgrade', function (elm) {
+      elm.classList.add('w3-hide');
+    });
+  }
+};
+
+TopNavBar.init = function () {
+  TopNavBar._logDebug('init');
+
+  TopNavBar.location = window.location;
+
+  // execution order priority: high
+  TopNavBar.initUserPreferredTheme();
+
+  // blind lookup
+  var uicCookieData = UserSession.getUicCookie();
+
+  var loggedIn = uicCookieData !== null;
+
+  var subscriptionPlan = 'free';
+
+  if (loggedIn) {
+    subscriptionPlan = uicCookieData.plan || 'free';
+  }
+
+  TopNavBar.loggedIn = loggedIn;
+
+  TopNavBar._logDebug('init -> data: ', {
+    'uicCookieData': uicCookieData,
+    'loggedIn': loggedIn,
+    'subscriptionPlan': subscriptionPlan
   });
 
-  var nextLessonButtonElm = wrapperElm.querySelector('.-next-lesson-btn');
-  nextLessonButtonElm.addEventListener('click', function () {
-    if (Pathfinder._nextLessonButtonClicked) {
+  Util.patchAuthLinks({
+    loggedIn: loggedIn
+  });
+
+  // execution order priority: high
+  TopNavBar._applyUserSessionUiTweaks({
+    loggedIn: loggedIn,
+    subscriptionPlan: subscriptionPlan
+  });
+
+  var iframedTopNavBar = TopNavBar._inIframe();
+
+  // execution order priority: high
+  if (iframedTopNavBar) {
+    TopNavBar._iframeInit();
+  }
+
+  // execution order priority: low
+  TopNavBar._attachMenuSortLogic();
+
+  // execution order priority: low
+  TopNavBar._attachNavEscapeListeners();
+
+  if (iframedTopNavBar) {
+    var explicitCurrentUrl = Util.getUrlQueryParam('currentUrl');
+
+    TopNavBar._logDebug('init -> explicitCurrentUrl: ', {
+      explicitCurrentUrl: explicitCurrentUrl,
+    });
+
+    if (explicitCurrentUrl) {
+      TopNavBar.postInitConfig({
+        env: 'network',
+        location: Util.getUrlParsed(explicitCurrentUrl),
+        loggedIn: loggedIn,
+        subscriptionPlan: subscriptionPlan
+      });
+    }
+  } else {
+    TopNavBar.postInitConfig({
+      env: 'classic',
+      location: window.location,
+      loggedIn: loggedIn,
+      subscriptionPlan: subscriptionPlan
+    });
+  }
+};
+
+TopNavBar._callFunc = function (funcName, funcArgs) {
+  if (funcName.indexOf('_') === 0) { // private function/method
+    TopNavBar._logWarning('Function call forbidden -> funcName, funcArgs: ', {
+      'funcName': funcName,
+      'funcArgs': funcArgs,
+    });
+
+    return false;
+  }
+
+  if (typeof TopNavBar[funcName] !== 'function') {
+    TopNavBar._logWarning('Function doesn\'t exist -> funcName, funcArgs: ', {
+      'funcName': funcName,
+      'funcArgs': funcArgs,
+    });
+
+    return false;
+  }
+
+  if (typeof funcArgs !== 'undefined') {
+    return TopNavBar[funcName].apply(null, funcArgs);
+  } else {
+    return TopNavBar[funcName]();
+  }
+};
+
+TopNavBar._iframeInit = function () {
+  window.addEventListener('message', function (message) {
+    TopNavBar._logDebug('message: ', message);
+
+    var whitelistedOrigins = [
+      'https://profile.w3schools.com',
+      'https://pathfinder.w3schools.com',
+      'https://my-learning.w3schools.com',
+      'https://spaces.w3schools.com',
+      'https://billing.w3schools.com',
+      'https://campus.w3schools.com',
+    ];
+
+    if (!whitelistedOrigins.includes(message.origin)) {
       return;
     }
 
-    Pathfinder._nextLessonButtonClicked = true;
+    var action = '';
+    var data = null;
 
-    // next lesson is fetched in background when pf component enters the viewport, we 
-    Util.objFieldOnSetCallback({
-      scopeRef: Pathfinder,
-      fieldName: '_nextLesson',
-      callback: function (res) {
-        if (res.error.code === '0') {
-          if (Pathfinder._nextLesson === null) { // no more lessons to visit
-            window.location.href = Pathfinder._baseUrl + '/learningpaths';
-          } else if (typeof Pathfinder._nextLesson.path !== 'undefined') {
-            window.location.href = '/' + Pathfinder._nextLesson.path;
-          } else {
-            Pathfinder._logError('nextLessonButtonElm -> click -> Pathfinder._nextLesson: ', Pathfinder._nextLesson);
-          }
-        } else {
-          Pathfinder._logError('nextLessonButtonElm -> click -> res: ', res);
-        }
+    if (typeof message.data.type !== 'undefined') {
+      action = message.data.type;
+      data = message.data.value;
+    } else if (typeof message.data.action !== 'undefined') {
+      action = message.data.action;
+      data = message.data.data;
+    }
+
+    TopNavBar._logDebug('message -> action, data: ', {
+      action: action,
+      data: data,
+    });
+
+    if (action === 'CONFIG') {
+      TopNavBar.postInitConfig(data);
+    } else if (action === 'CALL_FUNCTION') { // TODO: (high) tighten security belt
+      TopNavBar._callFunc(data.funcName, data.funcArgs);
+    }
+  });
+
+  TopNavBar._sendParentInitMessage();
+
+  TopNavBar.element.addEventListener('click', function (event) {
+    TopNavBar.notifyParentAboutLayout('on click', event);
+  });
+
+  TopNavBar.element.addEventListener('keyup', function (event) {
+    TopNavBar.notifyParentAboutLayout('on keyup', event);
+  });
+
+  TopNavBar.element.addEventListener('resize', function (event) {
+    TopNavBar.notifyParentAboutLayout('on resize', event);
+  });
+}
+
+TopNavBar.notifyParentAboutLayout = function (context, event) {
+  if (!TopNavBar._inIframe()) {
+    return;
+  }
+
+  TopNavBar._logDebug('notifyParentAboutLayout -> context, event: ', {
+    'context': context,
+    'event': event
+  });
+
+  clearTimeout(TopNavBar.parentLayoutNotifier);
+
+  TopNavBar.parentLayoutNotifier = setTimeout(function () {
+    var expanded = TopNavBar.isExpanded();
+
+    window.parent.postMessage({
+      'context': context,
+      'action': 'LAYOUT',
+      'expanded': expanded,
+      'iframeHeight': expanded ? TopNavBar.fullHeight : TopNavBar.defaultHeight, // legacy
+      'placeholderHeight': TopNavBar.defaultHeight, // legacy
+      'fullHeight': TopNavBar.fullHeight,
+      'mainNavHeightPx': TopNavBar.mainNavHeightPx,
+      'secondaryNavHeightPx': TopNavBar.secondaryNavHeightPx
+    }, '*');
+  }, 100);
+};
+
+TopNavBar.notifyParentAboutRedirect = function (context, redirectUrl) {
+  if (!TopNavBar._inIframe()) {
+    return;
+  }
+
+  TopNavBar._logDebug('notifyParentAboutRedirect -> context, redirectUrl: ', {
+    'context': context,
+    'redirectUrl': redirectUrl
+  });
+
+  clearTimeout(TopNavBar.parentRedirectNotifier);
+
+  TopNavBar.parentRedirectNotifier = setTimeout(function () {
+    window.parent.postMessage({
+      'context': context,
+      'action': 'REDIRECT',
+      'url': redirectUrl
+    }, '*');
+  }, 100);
+};
+
+TopNavBar._attachNavEscapeListeners = function () {
+  var navIds = [
+    'tutorials',
+    'exercises',
+    'certified',
+    'services'
+  ];
+
+  TopNavBar._loopArray(navIds, function (navId) {
+    document.getElementById('nav_' + navId).addEventListener('keydown', function (event) {
+      if (event.code === 'Escape') {
+        TopNavBar.closeNavItem(navId);
       }
     });
   });
+};
 
-  if (
-    Pathfinder._currentLessonFinishedOnInit === false
-  ) {
-    MyLearning.lessonFinishedListeners['Pathfinder -> my path'] = function () {
-      Pathfinder.uiUpdate();
-    };
+// < Google Search
 
-    if (MyLearning.lessonFinished) {
-      Pathfinder.uiUpdate();
+TopNavBar.googleSearchInit = function () {
+  TopNavBar._logDebug('googleSearchInit');
+
+  var gSearchScriptElm = document.getElementById('gSearch');
+
+  if (gSearchScriptElm == null) {
+    var cx = uic_r_y();
+    var gSearchScriptElmToInject = document.createElement('script');
+    gSearchScriptElmToInject.id = 'gSearch';
+    gSearchScriptElmToInject.type = 'text/javascript';
+    gSearchScriptElmToInject.async = true;
+    gSearchScriptElmToInject.src = 'https://www.google.com/cse/cse.js?cx=' + cx;
+
+    var firstScriptElm = document.getElementsByTagName('script')[0];
+    firstScriptElm.parentNode.insertBefore(gSearchScriptElmToInject, firstScriptElm);
+  }
+
+  TopNavBar.googleSearchFocusInput();
+};
+
+TopNavBar.googleSearchFocusInput = function () {
+  TopNavBar._logDebug('googleSearchFocusInput');
+
+  document.getElementById('tnb-google-search-input').focus();
+};
+
+TopNavBar.googleSearchResultsShown = function () {
+  var googleSearchResults = TopNavBar.element.querySelector('.gsc-results-wrapper-overlay.gsc-results-wrapper-visible');
+
+  return !!googleSearchResults;
+};
+
+TopNavBar.googleSearchResultsShownCallback = function (callback) {
+  if (TopNavBar.googleSearchResultsShown()) {
+    return callback();
+  }
+
+  var lookupAttempts = 512; // ~ 1 minute
+
+  var lookupInterval = setInterval(function () {
+    if (TopNavBar.googleSearchResultsShown()) {
+      clearInterval(lookupInterval);
+
+      return callback();
     }
+
+    lookupAttempts--;
+
+    if (!lookupAttempts) {
+      console.error('TopNavBar -> googleSearchResultsShownCallback -> timeout');
+
+      return clearInterval(lookupInterval);
+    }
+  }, 100);
+};
+
+TopNavBar._googleSearchPatchResultLinks = function () {
+  TopNavBar._findInnerElements(document.getElementById('googleSearch'), '.gsc-results a', function (linkElm) {
+    linkElm.setAttribute('target', '_blank');
+  });
+};
+
+TopNavBar.googleSearchShowMobileContainer = function () {
+  document.getElementById('tnb-google-search-container').classList.add('tnb-mobile-active');
+};
+
+TopNavBar.googleSearchHideMobileContainer = function () {
+  document.getElementById('tnb-google-search-container').classList.remove('tnb-mobile-active');
+};
+
+TopNavBar._getElementPos = function (elm) {
+  var rect = elm.getBoundingClientRect();
+
+  return {
+    'left': rect.left + window.scrollX,
+    'top': rect.top + window.scrollY
+  };
+}
+
+TopNavBar._iframeProxyFloatingComponent = function (context, id, action, prs) {
+  if (!(TopNavBar.env === 'network' || TopNavBar._inIframe())) {
+    return;
+  }
+
+  if (typeof prs === 'undefined') {
+    prs = {};
+  }
+
+  var floatingComponent = prs;
+
+  floatingComponent.id = id;
+  floatingComponent.action = action;
+
+  window.parent.postMessage({
+    'context': context,
+    'action': 'PROXY_FLOATING_COMPONENT',
+    'floatingComponent': floatingComponent,
+  }, '*');
+};
+
+TopNavBar.mountSearchSuggestionsLogic = function () {
+  var searchSuggestionsElm = document.getElementById('tnb-search-suggestions');
+
+  if (!searchSuggestionsElm) {
+    return;
+  }
+
+  var searchEntireW3schoolsBtn = searchSuggestionsElm.querySelector('#search-entire-w3schools-btn');
+
+  if (searchEntireW3schoolsBtn) {
+    searchEntireW3schoolsBtn.addEventListener('click', TopNavBar.googleSearchSubmit);
+  }
+};
+
+TopNavBar.unmountSearchSuggestionsLogic = function () {
+  var searchSuggestionsElm = document.getElementById('tnb-search-suggestions');
+
+  if (!searchSuggestionsElm) {
+    return;
+  }
+
+  var searchEntireW3schoolsBtn = searchSuggestionsElm.querySelector('#search-entire-w3schools-btn');
+
+  if (searchEntireW3schoolsBtn) {
+    searchEntireW3schoolsBtn.removeEventListener('click', TopNavBar.googleSearchSubmit);
+  }
+};
+
+TopNavBar.handleRedirect = function (context, redirectUrl) {
+  TopNavBar._logDebug('handleRedirect -> context: redirectUrl: ', {
+    'context': context,
+    'redirectUrl': redirectUrl
+  });
+
+  if (redirectUrl.indexOf('http') !== 0) {
+    if (redirectUrl.indexOf('/') !== 0) {
+      redirectUrl = '/' + redirectUrl;
+    }
+
+    redirectUrl = window.location.protocol + '//' + window.location.hostname + redirectUrl;
+
+    TopNavBar._logDebug('handleRedirect -> patched redirectUrl: ', redirectUrl);
+  }
+
+  if (TopNavBar.env === 'network' || TopNavBar._inIframe()) {
+    TopNavBar.notifyParentAboutRedirect(context, redirectUrl);
   } else {
-    Pathfinder.uiUpdate();
-  }
-
-  // cache menu template
-  await Pathfinder.uiFetchTemplate('/lib/pathfinder/html/user-authenticated/my-path-menu-modal.tmpl.html');
-};
-
-Pathfinder.uiRenderSkills = function (wrapperElm, skills) {
-  var outerDiv = document.createElement('div');
-  outerDiv.textContent = 'Required skills: ';
-
-  for (var key in skills) {
-    if (skills.hasOwnProperty(key)) {
-      var span = document.createElement('span');
-      span.style.cssText = 'display: inline-block; padding: 2px 5px; margin: 3px; font-size: 10px;';
-      span.className = 'w3-blue w3-round-small w3-border';
-      span.textContent = key + ': ' + skills[key].level;
-      outerDiv.appendChild(span);
-    }
-  }
-
-  wrapperElm.appendChild(outerDiv);
-};
-
-Pathfinder.uiCloseMenuModal = function () {
-  var menuWrapperElm = Util.getInnerElement(document.body, '.w3s-pathfinder.-my-path-menu');
-
-  if (menuWrapperElm) {
-    // detach event listeners
-    menuWrapperElm.removeEventListener('click', Pathfinder.uiStopClickPropagation);
-
-    Util.getInnerElement(menuWrapperElm, '.-close-btn').removeEventListener('click', Pathfinder.uiCloseMenuModal);
-
-    Util.getInnerElement(menuWrapperElm, '.-blur-overlay').removeEventListener('click', Pathfinder.uiCloseMenuModal);
-
-    menuWrapperElm.remove();
-
-    Pathfinder._menuModalRendered = false;
+    window.location.href = redirectUrl;
   }
 };
 
-Pathfinder.uiRenderMenuWrapper = function (targetElm, template) {
-  if (Pathfinder._menuModalRendered) {
-    return Util.getInnerElement(targetElm, '.w3s-pathfinder.-my-path-menu');
-  }
+TopNavBar.searchWithSuggestions = function (inp) {
+  var searchSuggestionsElm, val, i, l, resultIndexes = [], resultTexts = [], html = "", classAtt = "", pos1, posNext, cc, c0, c1, c2, stillgo, needle;
 
-  Pathfinder._menuModalRendered = true;
+  val = inp.value.trim().toUpperCase();
 
-  if (typeof targetElm === 'undefined') {
-    targetElm = document.body;
-  }
+  if (val == "") {
+    TopNavBar.closeSearchSuggestions();
 
-  var tmpPlaceholderDiv = document.createElement('div');
-  tmpPlaceholderDiv.innerHTML = template;
+    return false;
+  };
 
-  targetElm.appendChild(tmpPlaceholderDiv.firstChild);
+  TopNavBar.unmountSearchSuggestionsLogic();
 
-  var menuWrapperElm = Util.getInnerElement(targetElm, '.w3s-pathfinder.-my-path-menu');
+  searchSuggestionsElm = document.getElementById('tnb-search-suggestions');
+  // searchSuggestionsElm.innerHTML = '';
+  // searchSuggestionsElm.style.display = 'none';
 
-  if (!menuWrapperElm) {
-    Pathfinder._logError('uiRenderMenuWrapper -> wrapper elm not found');
-    return;
-  }
-
-  menuWrapperElm.addEventListener('click', Pathfinder.uiStopClickPropagation);
-
-  Util.getInnerElement(menuWrapperElm, '.-close-btn').addEventListener('click', Pathfinder.uiCloseMenuModal);
-
-  Util.getInnerElement(menuWrapperElm, '.-blur-overlay').addEventListener('click', Pathfinder.uiCloseMenuModal);
-
-  return menuWrapperElm;
-};
-
-Pathfinder.uiRenderMenuModal = function () {
-  var menuModalTemplateUrl = '/lib/pathfinder/html/user-authenticated/my-path-menu-modal.tmpl.html';
-
-  if (
-    typeof Pathfinder._uiTemplates[menuModalTemplateUrl] === 'undefined'
-    || Pathfinder._uiTemplates[menuModalTemplateUrl].error.code !== '0'
-  ) {
-    Pathfinder._logError('uiRenderMenuModal -> menuModalTemplateUrl cache error: ', Pathfinder._uiTemplates[menuModalTemplateUrl]);
-    return;
-  }
-
-  var menuWrappermElm = Pathfinder.uiRenderMenuWrapper(window.body, Pathfinder._uiTemplates[menuModalTemplateUrl].data);
-
-  if (!menuWrappermElm) {
-    Pathfinder._logError('uiRenderMenuModal -> menuWrappermElm not found');
-    return;
-  }
-
-  var navMenuInnerWrapperElm = Util.getInnerElement(menuWrappermElm, '.-scroll-box');
-
-  function createLessonListItem(lesson) {
-    var lessonItem = document.createElement('div');
-    lessonItem.className = '-lesson';
-    var lessonLink = document.createElement('a');
-    // lessonLink.style.cssText = 'width: 100%; padding: 4px !important;';
-    lessonLink.href = "/" + lesson.path;
-    lessonLink.innerHTML = Pathfinder.uiGetIconHtml({ id: 'check', containerSize: '24px 24px', style: 'top: -2px; margin-right: 10px; margin-bottom: -5px;' }) + Pathfinder.uiGetIconHtml({ id: 'lesson', style: 'bottom: -2px; margin-right: 11px;' }) + lesson.name;
-
-    var lessonLinkClassName = '-link w3-button w3-small';
-
-    if (lesson.current) {
-      lessonLinkClassName += ' -current';
-    }
-
-    if (lesson.visited) {
-      lessonLinkClassName += ' -visited';
-    }
-
-    if (lesson.goalTarget) {
-      lessonLinkClassName += ' -goal-target';
-
-      if (typeof lesson.nextGoalTarget !== 'undefined' && lesson.nextGoalTarget) {
-        lessonLinkClassName += ' -next-goal-target';
+  for (i = 0; i < array_search_suggestions.length; i++) {
+    if (array_search_suggestions[i][3]) {
+      stillgo = false;
+      needle = array_search_suggestions[i][3];
+      if (!Array.isArray(needle)) needle = [needle];
+      for (let y in needle) {
+        if (val.indexOf(needle[y].toUpperCase()) > -1) stillgo = true;
       }
-    } else {
-      lessonLinkClassName += ' -not-goal-target';
+      if (stillgo == false) continue;
     }
 
-    lessonLink.className = lessonLinkClassName;
 
-    // listItem.style.cssText = 'border-bottom: 1px solid darkgrey;';
-    // listItem.style.cssText = 'position: relative; margin-bottom: 2px;';
-
-    lessonItem.appendChild(lessonLink);
-
-    return lessonItem;
+    if (array_search_suggestions[i][0].toUpperCase().substr(0, val.length) == val || array_search_suggestions[i][2].toUpperCase().substr(0, val.length) == val) {
+      if (resultTexts.indexOf(array_search_suggestions[i][2]) == -1) {
+        resultIndexes.push(i);
+        resultTexts.push(array_search_suggestions[i][2]);
+        if (resultIndexes.length > 5) break;
+      }
+    }
   }
 
-  function createChapterListItem(topic, chapter) {
-    var chapterWrapper = document.createElement('div');
-    chapterWrapper.className = '-sub-list';
-    // sublist.style.cssText = 'padding: 0 0 10px 20px; position: relative;';
-    var chapterName = document.createElement('div');
-    chapterName.className = '-name';
-    // chapterName.style.cssText = 'font-weight: bold; position: relative; left: -20px; padding-bottom: 10px;';
-    chapterName.innerHTML = Pathfinder.uiGetIconHtml({ id: topic.uuid, type: 'skill', containerSize: '20px 20px', style: 'bottom: -3px; margin-right: 7px;' }) + topic.name + ' - ' + chapter.name;
-    chapterWrapper.appendChild(chapterName);
+  for (i = 0; i < array_search_suggestions.length; i++) {
 
-    chapter.lessons.forEach(function (lesson) {
-      chapterWrapper.appendChild(createLessonListItem(lesson));
-    });
+    if (array_search_suggestions[i][3]) {
+      stillgo = false;
+      needle = array_search_suggestions[i][3];
+      if (!Array.isArray(needle)) needle = [needle];
+      for (let y in needle) {
+        if (val.indexOf(needle[y].toUpperCase()) > -1) stillgo = true;
+      }
+      if (stillgo == false) continue;
+    }
 
-    return chapterWrapper;
+    if (resultIndexes.indexOf(i) == -1 && (array_search_suggestions[i][0].toUpperCase().indexOf(val) > -1 || array_search_suggestions[i][2].toUpperCase().indexOf(val) > -1)) {
+      if (resultTexts.indexOf(array_search_suggestions[i][2]) == -1) {
+        resultIndexes.push(i);
+        resultTexts.push(array_search_suggestions[i][2]);
+        if (resultIndexes.length > 5) break;
+      }
+    }
   }
 
-  function createTopicListItem(topic) {
-    var topicWrapper = document.createElement('div');
-    topicWrapper.className = '-list';
-    // topicItem.style.cssText = 'padding: 0 0 0 20px; position: relative;';
-    var topicName = document.createElement('div');
-    topicName.className = '-name';
-    // topicName.style.cssText = 'font-weight: bold; position: relative; left: -20px;';
-    topicName.innerHTML = Pathfinder.uiGetIconHtml({ id: topic.uuid, type: 'skill', containerSize: '20px 20px', style: 'bottom: -3px; margin-right: 7px;' }) + topic.name;
-    topicWrapper.appendChild(topicName);
+  for (i = 0; i < resultIndexes.length; i++) {
+    cc = array_search_suggestions[resultIndexes[i]][2];
+    pos1 = cc.toUpperCase().indexOf(val);
+    dd = "";
+    while (pos1 > -1) {
+      c0 = cc.substr(0, pos1);
+      c1 = '<span class="span_search">' + cc.substr(pos1, val.length) + '</span>';
+      c2 = cc.substr(pos1 + val.length);
+      dd += c0 + c1;
+      posNext = c2.toUpperCase().indexOf(val);
+      if (posNext > -1) {
+        cc = c2;
+        pos1 = posNext;
+      } else {
+        cc = dd + c2;
+        pos1 = -1;
+      }
+    }
+    classAtt = "";
+    if (html == "") classAtt = " search_active";
+    html += '<a class="search_item search-suggestion-link' + classAtt + '" href="' + array_search_suggestions[resultIndexes[i]][1] + '">' + cc + '</a>';
+  }
+  classAtt = "";
+  if (html == "") classAtt = " search_active";
+  html += '<button class="search_item' + classAtt + '" id="search-entire-w3schools-btn" style="border-top:1px solid #ddd;">Search W3Schools</button>';
 
-    topic.chapters.forEach(function (chapter) {
-      topicWrapper.appendChild(createChapterListItem(topic, chapter));
-    });
+  searchSuggestionsElm.innerHTML = html;
 
-    return topicWrapper;
+  if (TopNavBar.env === 'network' || TopNavBar._inIframe()) {
+    searchSuggestionsElm.style.opacity = '0';
   }
 
-  var navMenu = document.createElement('div');
-  navMenu.style.cssText = '';
+  searchSuggestionsElm.style.display = 'block';
 
-  var topics = Pathfinder._goalNavMeta.topics;
+  TopNavBar.mountSearchSuggestionsLogic();
 
-  topics.forEach(function (topic) {
-    navMenu.appendChild(createTopicListItem(topic));
+  TopNavBar._iframeProxyFloatingComponent(
+    'TopNavBar.searchWithSuggestions',
+    'tnb-search-suggestions',
+    'UPSERT',
+    {
+      'tagName': searchSuggestionsElm.tagName.toLowerCase(),
+      'class': searchSuggestionsElm.getAttribute('class'),
+      'innerHtml': html,
+      'styles': {
+        'display': 'block',
+      },
+      'mountFuncName': 'mountSearchSuggestionsLogic',
+      'unmountFuncName': 'unmountSearchSuggestionsLogic',
+      // 'pos': TopNavBar._getElementPos(searchSuggestionsElm)
+    }
+  );
+}
+
+TopNavBar.searchFieldLostFocus = function (event) {
+  window.setTimeout(function () {
+    TopNavBar.closeSearchSuggestions();
+  }, 500);
+}
+
+TopNavBar.googleSearchAttachKeyPressHandler = function (event) {
+
+  var x, n, nn, i, cc = 0, dd;
+
+  var keycode = event.keyCode;
+  if (keycode === 38 || keycode === 40) { //up || down
+    //x = TopNavBar.element.getElementsByClassName("search_item");
+    x = document.getElementsByClassName("search_item");
+    for (i = 0; i < x.length; i++) {
+      if (x[i].className.indexOf("search_active") > -1) {
+        x[i].className = "search_item";
+        n = i;
+        break;
+      }
+    }
+    if (keycode === 38) {
+      nn = n - 1;
+      if (nn < 0) nn = 0;
+    }
+    if (keycode === 40) {
+      nn = n + 1;
+      if (nn >= x.length) nn = nn - 1;
+    }
+    x[nn].className = "search_item search_active";
+  }
+  if (keycode === 13) {  //enter
+    event.preventDefault();
+    //x = TopNavBar.element.getElementsByClassName("search_item");
+    x = document.getElementsByClassName("search_item");
+    if (x.length === 0) {
+      cc = 1;
+    }
+    for (i = 0; i < x.length; i++) {
+      if (x[i].className.indexOf("search_active") > -1) {
+        n = x[i].getAttribute('href');
+        // if (n.indexOf("#search-entire-w3schools") > -1) {
+        if (x[i].getAttribute('id') === 'search-entire-w3schools-btn') {
+          cc = 1;
+        }
+        break;
+      }
+    }
+    if (cc === 1) {
+      TopNavBar.googleSearchSubmit();
+      TopNavBar.closeSearchSuggestions();
+    } else {
+      if (n !== null) {
+        TopNavBar.handleRedirect('TopNavBar.googleSearchAttachKeyPressHandler', n);
+      }
+    }
+  }
+};
+
+TopNavBar.googleSearchInitializedCallback = function (callback) {
+  if (typeof google == 'object') {
+    return callback();
+  }
+
+  var lookupAttempts = 512; // ~ 1 minute
+
+  var lookupInterval = setInterval(function () {
+    if (typeof google == 'object') {
+      clearInterval(lookupInterval);
+
+      return callback();
+    }
+
+    lookupAttempts--;
+
+    if (!lookupAttempts) {
+      console.error('TopNavBar -> googleSearchInitializedCallback -> timeour');
+
+      return clearInterval(lookupInterval);
+    }
+  }, 100);
+}
+
+TopNavBar.googleSearchGetInputValue = function () {
+  return document.getElementById('tnb-google-search-input').value;
+}
+
+TopNavBar.googleSearchSubmit = function () {
+  TopNavBar._logDebug('googleSearchSubmit');
+
+  TopNavBar.googleSearchInit();
+
+  if (!TopNavBar.googleSearchGetInputValue()) {
+    TopNavBar._logDebug('googleSearchSubmit -> empty input');
+
+    return;
+  }
+
+  TopNavBar.googleSearchInitializedCallback(TopNavBar.googleSearchExecute);
+};
+
+TopNavBar.googleSearchExecute = function () {
+  var googleSearchInputValue = TopNavBar.googleSearchGetInputValue();
+  var googleSearchExecuteRes = google.search.cse.element.getElement('standard0').execute(googleSearchInputValue);
+
+  TopNavBar._logDebug('googleSearchExecute -> googleSearchInputValue, googleSearchExecuteRes: ', {
+    'googleSearchInputValue': googleSearchInputValue,
+    'googleSearchExecuteRes': googleSearchExecuteRes,
   });
 
-  navMenuInnerWrapperElm.appendChild(navMenu);
+  TopNavBar.googleSearchResultsShownCallback(function () {
+    TopNavBar._googleSearchPatchResultLinks();
 
-  var activeLink = navMenuInnerWrapperElm.querySelector('.-link.-current');
+    if (TopNavBar._inIframe()) {
+      TopNavBar.notifyParentAboutLayout('on google search results', {
+        'inputValue': googleSearchInputValue,
+      });
+    }
+  });
+};
 
-  if (activeLink) {
-    activeLink.scrollIntoView();
+// > Google Search
+
+TopNavBar.openMenu = function () {
+  var accordionNavElm = TopNavBar.element.querySelector('.tnb-mobile-nav');
+  var accordionNavBtnElm = TopNavBar.element.querySelector('.tnb-menu-btn');
+
+  if (accordionNavElm.classList.contains('tnb-active')) {
+    accordionNavElm.classList.remove('tnb-active');
+    accordionNavBtnElm.getElementsByTagName('i')[0].style.display = 'inline';
+    accordionNavBtnElm.getElementsByTagName('i')[1].style.display = 'none';
+    TopNavBar.closeAllNavItems();
+    TopNavBar.closeMenu();
+  } else {
+    accordionNavElm.classList.add('tnb-active');
+    accordionNavBtnElm.getElementsByTagName('i')[0].style.display = 'none';
+    accordionNavBtnElm.getElementsByTagName('i')[1].style.display = 'inline';
+  }
+
+  TopNavBar.notifyParentAboutLayout('on menu open (toggle)');
+};
+
+TopNavBar.closeMenu = function () {
+  TopNavBar.element.querySelector('.tnb-mobile-nav').classList.remove('tnb-active');
+
+  var accordionNavBtnElm = TopNavBar.element.querySelector('.tnb-menu-btn');
+  accordionNavBtnElm.getElementsByTagName('i')[0].style.display = 'inline';
+  accordionNavBtnElm.getElementsByTagName('i')[1].style.display = 'none';
+
+  TopNavBar.notifyParentAboutLayout('on menu close');
+};
+
+TopNavBar._closeMobileNav = function (sectionWrapperElm) {
+  sectionWrapperElm.classList.remove('tnb-active');
+
+  sectionWrapperElm.querySelector('.tnb-mobile-nav-section-body').innerHTML = '';
+
+  var sectionToggleBtnElm = sectionWrapperElm.querySelector('.tnb-mobile-nav-section-toggle-btn');
+
+  sectionToggleBtnElm.classList.remove('tnb-active');
+
+  var sectionToggleBtnIconElm = sectionToggleBtnElm.querySelector('.tnb-icon');
+
+  sectionToggleBtnIconElm.classList.remove('fa-caret-up');
+  sectionToggleBtnIconElm.classList.add('fa-caret-down');
+};
+
+TopNavBar._openMobileNav = function (sectionWrapperElm, sectionId) {
+  var sectionBodyElm = sectionWrapperElm.querySelector('.tnb-mobile-nav-section-body');
+
+  sectionBodyElm.innerHTML = TopNavBar.element.querySelector('#nav_' + sectionId).innerHTML;
+
+  var sectionFilterInputElm = sectionBodyElm.querySelector('.filter-input');
+
+  if (sectionFilterInputElm) {
+    sectionFilterInputElm.removeAttribute('oninput');
+    sectionFilterInputElm.addEventListener('input', function (event) {
+      TopNavBar.filter(event, 'sectionxs_' + sectionId);
+    });
+  }
+
+  var sectionFilterClearBtnElm = sectionBodyElm.querySelector('.filter-clear-btn');
+
+  if (sectionFilterClearBtnElm) {
+    sectionFilterClearBtnElm.removeAttribute('onclick');
+    sectionFilterClearBtnElm.addEventListener('click', function (event) {
+      TopNavBar.clearFilter(event, 'sectionxs_' + sectionId);
+    });
+  }
+
+  var sectionToggleBtnElm = sectionWrapperElm.querySelector('.tnb-mobile-nav-section-toggle-btn');
+
+  sectionToggleBtnElm.classList.add('tnb-active');
+
+  var sectionToggleBtnIconElm = sectionToggleBtnElm.querySelector('.tnb-icon');
+
+  sectionToggleBtnIconElm.classList.remove('fa-caret-down');
+  sectionToggleBtnIconElm.classList.add('fa-caret-up');
+
+  sectionWrapperElm.classList.add('tnb-active');
+
+  setTimeout(function () {
+    TopNavBar._scrollMobileNav(sectionWrapperElm);
+  }, 50);
+};
+
+TopNavBar._scrollMobileNav = function (targetElm, smoothScroll, scrollTopValue) {
+  clearInterval(TopNavBar.mobileNavScrollInterval);
+
+  var scrollElm = TopNavBar.element.querySelector('#tnb-mobile-nav');
+
+  var scrollElmOffset = scrollElm.getBoundingClientRect();
+
+  var targetElmOffset = targetElm.getBoundingClientRect();
+
+  TopNavBar._logDebug('_scrollMobileNav: ', {
+    'scrollElm': scrollElm,
+    'scrollElm.scrollTop': scrollElm.scrollTop,
+    'scrollElmOffset': scrollElmOffset,
+    'targetElmOffset': targetElmOffset,
+    'scrollTopValue': scrollTopValue,
+  });
+
+  if (typeof smoothScroll === 'undefined') {
+    smoothScroll = true;
+  }
+
+  if (typeof scrollTopValue === 'undefined') {
+    scrollTopValue = targetElmOffset.top + scrollElm.scrollTop - scrollElmOffset.top - 1;
+  }
+
+  TopNavBar._logDebug('_scrollMobileNav -> scrollTopValue: ', scrollTopValue);
+  TopNavBar._logDebug('_scrollMobileNav -> scrollElm.scrollTop: ', scrollElm.scrollTop);
+  TopNavBar._logDebug('_scrollMobileNav -> scrollTopValue - scrollElm.scrollTop: ', scrollTopValue - scrollElm.scrollTop);
+
+  if (scrollTopValue === scrollElm.scrollTop) {
+    return;
+  }
+
+  if (!smoothScroll) {
+    scrollElm.scrollTop = scrollTopValue;
+    return;
+  }
+
+  var scrollIntervalDelay = 2;
+  var scrollAmount = 0;
+  var scrollAmountPerIntervalTick = 0;
+
+  if (scrollElm.scrollTop < scrollTopValue) {
+    scrollAmount = scrollTopValue - scrollElm.scrollTop;
+    scrollAmountPerIntervalTick = (scrollAmount / 50) + 10;
+
+    TopNavBar._logDebug('_scrollMobileNav -> scrollAmount (add): ', scrollAmount);
+    TopNavBar._logDebug('_scrollMobileNav -> scrollAmountPerIntervalTick (add): ', scrollAmountPerIntervalTick);
+
+    TopNavBar.mobileNavScrollInterval = setInterval(function () {
+      scrollElm.scrollTop += scrollAmountPerIntervalTick;
+
+      if (scrollElm.scrollTop >= scrollTopValue) {
+        scrollElm.scrollTop = scrollTopValue;
+        clearInterval(TopNavBar.mobileNavScrollInterval);
+      }
+    }, scrollIntervalDelay);
+  } else {
+    scrollAmount = scrollElm.scrollTop - scrollTopValue;
+    scrollAmountPerIntervalTick = (scrollAmount / 50) + 10;
+
+    TopNavBar._logDebug('_scrollMobileNav -> scrollAmount (sub): ', scrollAmount);
+    TopNavBar._logDebug('_scrollMobileNav -> scrollAmountPerIntervalTick (sub): ', scrollAmountPerIntervalTick);
+
+    TopNavBar.mobileNavScrollInterval = setInterval(function () {
+      scrollElm.scrollTop -= scrollAmountPerIntervalTick;
+
+      if (scrollElm.scrollTop <= scrollTopValue) {
+        scrollElm.scrollTop = scrollTopValue;
+        clearInterval(TopNavBar.mobileNavScrollInterval);
+      }
+    }, scrollIntervalDelay);
+  }
+}
+
+TopNavBar.toggleMobileNav = function (event, sectionId) {
+  var sectionToggleBtnElm = event.target.classList.contains('w3-button') ? event.target : event.target.parentElement;
+  var sectionWrapperElm = sectionToggleBtnElm.parentElement;
+
+  if (sectionWrapperElm.classList.contains('tnb-active')) { // close current section
+    TopNavBar._closeMobileNav(sectionWrapperElm);
+
+    setTimeout(function () {
+      // TopNavBar._scrollMobileNav(sectionWrapperElm, false, 0);
+      TopNavBar._scrollMobileNav(sectionWrapperElm, true, 0);
+    }, 50);
+  } else { // open section
+    // check/close other open sections
+    TopNavBar._findInnerElements(TopNavBar.element, '.tnb-mobile-nav-section.tnb-active', function (sectionWrapperElm) {
+      TopNavBar._closeMobileNav(sectionWrapperElm);
+    });
+
+    TopNavBar._openMobileNav(sectionWrapperElm, sectionId);
   }
 };
+
+TopNavBar.openNavItem = function (navId) {
+  if (TopNavBar.element.querySelector('#nav_' + navId).style.display === 'block') {
+    TopNavBar.closeNavItem(navId);
+
+    TopNavBar.element.classList.remove('full-screen');
+  } else {
+    TopNavBar.closeAllNavItems();
+
+    TopNavBar.element.classList.add('full-screen');
+
+    TopNavBar.element.querySelector('#nav_' + navId).style.display = 'block';
+    TopNavBar.element.querySelector('#nav_' + navId).focus();
+
+    if (TopNavBar.element.querySelector('#navbtn_' + navId)) {
+      TopNavBar.element.querySelector('#navbtn_' + navId).getElementsByTagName('i')[0].style.display = 'none';
+      TopNavBar.element.querySelector('#navbtn_' + navId).getElementsByTagName('i')[1].style.display = 'inline';
+      TopNavBar.element.querySelector('#navbtn_' + navId).classList.add('mystyle');
+    }
+
+    TopNavBar.notifyParentAboutLayout('on nav item open', {
+      'navId': navId,
+    });
+  }
+};
+
+TopNavBar.closeNavItem = function (navId) {
+  var navItemElm = TopNavBar.element.querySelector('#nav_' + navId)
+
+  if (!navItemElm) {
+    return;
+  }
+
+  navItemElm.style.display = 'none';
+
+  TopNavBar.element.classList.remove('full-screen');
+
+  if (navId !== 'services') {
+    try {
+      var inputAltEvent = new Event('input', {
+        'bubbles': true,
+        'cancelable': true
+      });
+
+      navItemElm.querySelector('input').value = ''
+      navItemElm.querySelector('input').dispatchEvent(inputAltEvent)
+    } catch (exc) {
+      console.error(exc);
+    }
+  }
+
+  if (TopNavBar.element.querySelector('#navbtn_' + navId)) {
+    TopNavBar.element.querySelector('#navbtn_' + navId).getElementsByTagName('i')[0].style.display = 'inline';
+    TopNavBar.element.querySelector('#navbtn_' + navId).getElementsByTagName('i')[1].style.display = 'none';
+    TopNavBar.element.querySelector('#navbtn_' + navId).classList.remove('mystyle');
+  }
+
+  TopNavBar.notifyParentAboutLayout('on nav item close', {
+    'navId': navId,
+  });
+};
+
+TopNavBar.closeSearchSuggestions = function () {
+  TopNavBar.unmountSearchSuggestionsLogic();
+
+  var searchSuggestionsElm = document.getElementById('tnb-search-suggestions');
+  searchSuggestionsElm.style.display = 'none';
+  searchSuggestionsElm.innerHTML = '';
+
+  TopNavBar._iframeProxyFloatingComponent(
+    'TopNavBar.closeSearchSuggestions',
+    'tnb-search-suggestions',
+    'REMOVE',
+    {
+      // 'mountFuncName': 'mountSearchSuggestionsLogic',
+      'unmountFuncName': 'unmountSearchSuggestionsLogic',
+    }
+  );
+};
+
+// < menu filter
+TopNavBar.allMenuItemsInCategoryAreHidden = function (menu, category) {
+  var elements = menu.querySelectorAll(`[data-category="${category}"]`);
+
+  for (var i = 0; i < elements.length; i++) {
+    if (!elements[i].classList.contains('d-none')) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+TopNavBar.clearFilter = function (event, sectionId) {
+  var filterInnerWrapperElm = event.target.classList.contains('filter-clear-btn') ? event.target.parentElement : event.target.parentElement.parentElement;
+
+  var filterInputElm = filterInnerWrapperElm.querySelector('.filter-input');
+  // console.log('filterInputElm: ', filterInputElm);
+
+  if (filterInputElm) {
+    filterInputElm.value = '';
+  }
+
+  TopNavBar.filter(event, sectionId, '');
+}
+
+TopNavBar._filterServices = function (event, sectionId, filterValue) {
+  // TopNavBar._logDebug('filterValue: ', filterValue);
+
+  var sectionElm = TopNavBar.element.querySelector('#' + sectionId);
+
+  var serviceboxesElm = sectionElm.querySelector('.serviceboxes');
+
+  var noMatchElm = serviceboxesElm.querySelector('#no-match');
+
+  if (noMatchElm) {
+    noMatchElm.remove();
+  }
+
+  if (!filterValue) {
+    TopNavBar._findInnerElements(serviceboxesElm, '.servicebox', function (elm) {
+      elm.style.display = 'block';
+    });
+  } else {
+    var matchFound = false;
+
+    TopNavBar._findInnerElements(serviceboxesElm, '.servicebox', function (elm) {
+      // TopNavBar._logDebug('elm.textContent: ', elm.textContent);
+      if (elm.textContent.toLowerCase().indexOf(filterValue) !== -1) {
+        elm.style.display = 'block';
+
+        matchFound = true;
+      } else {
+        elm.style.display = 'none';
+      }
+    });
+
+    if (!matchFound) {
+      var noMatchMessage = document.createElement('div');
+      noMatchMessage.id = 'no-match';
+      noMatchMessage.textContent = 'No matches found';
+      noMatchMessage.style.marginTop = '25px';
+      noMatchMessage.style.textAlign = 'center';
+      serviceboxesElm.appendChild(noMatchMessage);
+    }
+  }
+}
+
+TopNavBar.filter = function (event, sectionId, altValue) {
+  var filterValue = typeof altValue !== 'undefined' ? altValue : event.target.value.toLowerCase();
+
+  if (sectionId === 'nav_services' || sectionId === 'sectionxs_services') {
+    return TopNavBar._filterServices(event, sectionId, filterValue);
+  }
+
+  var sectionElm = TopNavBar.element.querySelector('#' + sectionId);
+
+  var noMatchElm = sectionElm.querySelector('#no-match');
+
+  if (noMatchElm) {
+    noMatchElm.remove();
+  }
+
+  if (sectionId !== 'nav_tutorials' && sectionId !== 'sectionxs_tutorials') {
+    TopNavBar._findInnerElements(sectionElm, '.black-box-container', function (elm) {
+      elm.style.display = 'block';
+    });
+  }
+
+  var uniqueCategoriesDeduplicator = {};
+
+  TopNavBar._findInnerElements(sectionElm, '[data-category]', function (elm) {
+    uniqueCategoriesDeduplicator[elm.getAttribute('data-category')] = true;
+  });
+
+  var uniqueCategories = Object.keys(uniqueCategoriesDeduplicator);
+
+  TopNavBar._findInnerElements(sectionElm, '[data-name]', function (elm) {
+    var dataName = elm.getAttribute('data-name');
+
+    if (!dataName.includes(filterValue)) {
+      elm.classList.remove('d-block');
+      elm.classList.add('d-none');
+    } else {
+      elm.classList.remove('d-none');
+      elm.classList.add('d-block');
+    }
+  });
+
+  var emptyCategories = [];
+
+  uniqueCategories.forEach(function (category) {
+    var allHidden = TopNavBar.allMenuItemsInCategoryAreHidden(sectionElm, category);
+
+    if (allHidden) {
+      emptyCategories.push(category);
+    }
+
+    // hide section heading element if all inner items are hidden
+    TopNavBar._findInnerElements(sectionElm, `[data-heading="${category}_title"]`, function (headingElm) {
+      if (allHidden) {
+        headingElm.classList.add('d-none');
+      } else {
+        headingElm.classList.remove('d-none');
+      }
+    });
+  });
+
+  // Checks if all categories are empty, if true displays a message "No match found..."
+  if (emptyCategories.length === uniqueCategories.length) {
+    var noMatchMessage = document.createElement('div');
+    noMatchMessage.id = 'no-match';
+    noMatchMessage.textContent = 'No matches found';
+    noMatchMessage.style.marginTop = '25px';
+    noMatchMessage.style.textAlign = 'center';
+    sectionElm.querySelector('.w3-content').appendChild(noMatchMessage);
+
+    if (sectionId !== 'nav_tutorials' && sectionId !== 'sectionxs_tutorials') {
+      TopNavBar._findInnerElements(sectionElm, '.black-box-container', function (elm) {
+        elm.style.display = 'none';
+      });
+    }
+  }
+};
+
+// > menu filter
+TopNavBar.sortMenu = function (sectionId, type) {
+  var section = TopNavBar.element.querySelector('#nav_' + sectionId);
+
+  var linkLists = TopNavBar._menuSectionsInTab[sectionId].map(function (listId) {
+    return section.querySelector(`#${listId}`);
+  });
+
+  if (type.toLowerCase() === 'alphabetically') {
+    linkLists.forEach(function (list) {
+      var divsArray = TopNavBar._findInnerElements(list, 'div');
+
+      // Sort the child divs.
+      divsArray.sort(function (a, b) {
+        var aText = a.querySelector('a').innerText;
+        var bText = b.querySelector('a').innerText;
+        return aText.toLowerCase().localeCompare(bText.toLowerCase());
+      });
+
+      // Append each sorted div back into the parent.
+      divsArray.forEach(function (div) {
+        list.appendChild(div);
+      });
+    });
+  } else {
+    linkLists.forEach(function (section) {
+      var divsArray = TopNavBar._findInnerElements(section, 'div');
+      // Sort based on original index.
+      divsArray.sort(function (a, b) {
+        return a.dataset.originalIndex - b.dataset.originalIndex;
+      });
+      // Append each sorted div back into the parent.
+      divsArray.forEach(function (div) {
+        section.appendChild(div);
+      });
+    });
+  }
+};
+
+TopNavBar.closeAllNavItems = function () {
+  TopNavBar.closeNavItem("tutorials");
+  TopNavBar.closeNavItem("exercises");
+  TopNavBar.closeNavItem("certified");
+  TopNavBar.closeNavItem("services");
+  TopNavBar.element.classList.remove('full-screen');
+  TopNavBar.closeSearchSuggestions();
+};
+
+TopNavBar.initUserPreferredTheme = function () {
+  TopNavBar.toggleUserPreferredTheme(true);
+};
+
+TopNavBar.toggleUserPreferredTheme = function (init) {
+  if (typeof init === 'undefined') {
+    init = false;
+  }
+
+  // var codeTheme = localStorage.getItem('preferredmode');
+  var pageTheme = localStorage.getItem('preferredpagemode');
+
+  if (!init) {
+    if (pageTheme == 'dark') {
+      pageTheme = 'light';
+    } else {
+      pageTheme = 'dark';
+    }
+  }
+
+  var bodyClassName = document.body.className
+    .replace('darktheme', '')
+    .replace('darkpagetheme', '')
+    .replace('  ', ' ');
+
+  if (pageTheme == 'dark') {
+    bodyClassName += ' darktheme';
+    bodyClassName += ' darkpagetheme';
+  }
+
+  document.body.className = bodyClassName;
+  localStorage.setItem('preferredmode', pageTheme);
+  localStorage.setItem('preferredpagemode', pageTheme);
+};
+
+// generic one
+TopNavBar.mouseHandler = function (event, elm, closingOrExtra) {
+  TopNavBar._logDebug('mouseHandler -> args: ', arguments);
+
+  if (typeof closingOrExtra === 'undefined') {
+    closingOrExtra = false;
+  }
+
+  var icon = elm.querySelector('i');
+  if (event.type === 'keydown') {
+    if (event.code !== 'Enter') return;
+    if (event.code === 'Enter') {
+      if (elm.id.includes('close-nav-x')) {
+        TopNavBar.closeNavItem(closingOrExtra); // closingOrExtra in this case is 'tutorials' | 'exercises' | 'certified' | 'services'
+        return;
+      }
+      var modalonEnter = elm.nextElementSibling;
+      icon.className = modalonEnter.style.display === 'block' ? 'fa fa-caret-down filter-caret' : 'fa fa-caret-up filter-caret';
+      modalonEnter.style.display = modalonEnter.style.display === 'block' ? 'none' : 'block';
+    } else {
+      event.preventDefault();
+    }
+  } else if (elm.id.includes('close-nav-x')) {
+    TopNavBar.closeNavItem(closingOrExtra); // closingOrExtra in this case is 'tutorials' | 'exercises' | 'certified' | 'services'
+  } else {
+    var modalonKeydown = elm.querySelector(".filter-modal-container");
+    icon.className = closingOrExtra ? 'fa fa-caret-down filter-caret' : 'fa fa-caret-up filter-caret';
+    modalonKeydown.style.display = closingOrExtra ? 'none' : 'block';
+  }
+};
+
+TopNavBar._attachMenuSortLogic = function () {
+  TopNavBar._logDebug('_attachMenuSortLogic');
+
+  // used for restoring original sort order
+  var storeOriginalSortIndexes = function () {
+    var menus = [];
+
+    TopNavBar._loopObj(TopNavBar._menuSectionsInTab, function (tabListIds, tabId) {
+      menus.push(
+        tabListIds.map(function (listId) {
+          return TopNavBar.element.querySelector(`#nav_${tabId}`).querySelector(`#${listId}`);
+        })
+      );
+    });
+
+    menus.forEach(function (lists) {
+      lists.forEach(function (list) {
+        TopNavBar._findInnerElements(list, 'div', function (divElm, divElmIndex) {
+          divElm.dataset.originalIndex = divElmIndex;
+        });
+      })
+    });
+  };
+
+  storeOriginalSortIndexes();
+
+  var attachSortBtnEventListeners = function (sortBtnElm) {
+    sortBtnElm.addEventListener('mouseenter', function (event) {
+      TopNavBar.mouseHandler(event, sortBtnElm, false);
+    });
+
+    sortBtnElm.addEventListener('mouseleave', function (event) {
+      TopNavBar.mouseHandler(event, sortBtnElm, true);
+    });
+
+    sortBtnElm.addEventListener('focusout', function (event) {
+      var isClickInside = sortBtnElm.contains(event.relatedTarget);
+
+      if (!isClickInside) {
+        sortBtnElm.querySelector('.filter-modal-container').style.display = 'none';
+      }
+    })
+  };
+
+  var enabledSortNavs = ['tutorials', 'exercises', 'certified'];
+
+  TopNavBar._loopArray(enabledSortNavs, function (sortNav) {
+    var sortBtnElm = TopNavBar.element.querySelector('#' + sortNav + '-sort-btn');
+
+    if (sortBtnElm) {
+      attachSortBtnEventListeners(sortBtnElm);
+
+      var sortFilterContainer = sortBtnElm.querySelector(".filter-modal");
+      TopNavBar._logDebug('sortNav, sortFilterContainer: ', {
+        sortNav: sortNav,
+        sortFilterContainer: sortFilterContainer
+      });
+
+      if (sortFilterContainer) {
+        TopNavBar._findInnerElements(sortFilterContainer, 'button', function (buttonElm) {
+          buttonElm.addEventListener('click', function (event) {
+            TopNavBar._logDebug('sortNav click: ', {
+              sortNav: sortNav,
+              eventTarget: event.target
+            });
+
+            var sortBy = event.target.innerText;
+            TopNavBar.element.querySelector(`#${sortNav}-active-sorting`).textContent = sortBy;
+
+            var sortByBtn = sortFilterContainer.querySelector(`#${sortNav}-${sortBy.toLowerCase()}`);
+            sortFilterContainer.querySelector('.w3-button.active').classList.remove('active');
+
+            sortByBtn.classList.add('active');
+            TopNavBar.sortMenu(sortNav, sortBy);
+          });
+        });
+      }
+    }
+  });
+};
+
+// < legacy mapping
+window.w3_open = TopNavBar.openMenu;
+window.w3_close = TopNavBar.closeMenu;
+window.w3_open_nav = TopNavBar.openNavItem;
+window.w3_close_nav = TopNavBar.closeNavItem;
+window.w3_close_all_topnav = TopNavBar.closeAllNavItems;
+window.open_search = TopNavBar.googleSearchFocusInput;
+window.gSearch = TopNavBar.googleSearchInit;
+// > legacy mapping
+
+TopNavBar.init();
