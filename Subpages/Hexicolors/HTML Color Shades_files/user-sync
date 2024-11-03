@@ -1,0 +1,9 @@
+<!DOCTYPE HTML>
+<html>
+<body>
+<iframe src='https://visitor-waardex.omnitagjs.com/visitor/isync?uid=f9f79c63be893b97a3364690a09d0b8d&name=WAARDEX_SSP&url=https%3A%2F%2Fsync.adkernel.com%2Fuser-sync%3Fzone%3D221544%26dsp%3D688143%26t%3Diframe%26uid%3D%5BBUYER_USERID%5D' style ='display:none' width='0' height='0' frameborder='0'></iframe>
+<iframe src='https://dsp-service.admatic.com.tr/cookie_sync?r=%2F%2Fsync.adkernel.com%2Fuser-sync%3Fzone%3D221544%26dsp%3D766575%26t%3Diframe%26uid%3D%24%7BUSER_ID%7D' style ='display:none' width='0' height='0' frameborder='0'></iframe>
+<script>function sync(){window.location.replace('https://rtb-csync.smartadserver.com/redir/?issi=1&partnerid=159&partneruserid=A1588209830339679144');}
+if(window.addEventListener){window.addEventListener('load',sync);} else if(window.attachEvent){window.attachEvent('onload',sync);} else {window.onload=sync;}</script>
+</body>
+</html>
